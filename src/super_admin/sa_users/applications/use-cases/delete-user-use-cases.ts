@@ -12,6 +12,7 @@ export class DeleteUserUseCases implements ICommandHandler<DeleteUserCommand> {
 
   async execute(command: DeleteUserCommand): Promise<Result<boolean>> {
     const deletedUser = await this.saUsersRepository.deleteUser(command.userId);
+    console.log(deletedUser);
     if (!deletedUser)
       return new Result<boolean>(ResultCode.NotFound, false, 'User not found');
     return new Result<boolean>(ResultCode.Success, true, null);

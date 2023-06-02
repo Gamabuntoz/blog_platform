@@ -13,6 +13,6 @@ export class Devices {
   ipAddress: string;
   @Column()
   deviceName: string;
-  @ManyToOne(() => Users, (User) => User.id, { cascade: true })
+  @ManyToOne(() => Users, (User) => User.id, { onDelete: 'CASCADE' })
   user: string;
 }

@@ -18,7 +18,7 @@ export class SAUsersRepository {
     }
     const queryBuilder = this.dbUsersRepository.createQueryBuilder('u');
     if (queryData.banStatus) {
-      queryBuilder.where({ 'u.userIsBanned': queryData.banStatus });
+      queryBuilder.where({ userIsBanned: queryData.banStatus });
     }
     if (queryData.searchEmailTerm || queryData.searchLoginTerm) {
       queryBuilder.where(
@@ -62,8 +62,11 @@ export class SAUsersRepository {
     return this.dbUsersRepository.findOne({ where: { id: id } });
   }
 
-  async updateUserBanStatus(userId: string, inputData: InputBanUserDTO) {
-    return this.dbUsersRepository.update(
+  async updateUserBanStatus(
+    userId: string,
+    inputData: InputBanUserDTO,
+  ): Promise<boolean> {
+    const result = await this.dbUsersRepository.update(
       { id: userId },
       {
         userIsBanned: inputData.isBanned,
@@ -71,9 +74,11 @@ export class SAUsersRepository {
         userBanDate: inputData.isBanned ? new Date().toISOString() : null,
       },
     );
+    return result.affected === 1;
   }
 
-  async deleteUser(id: string) {
-    return this.dbUsersRepository.delete({ id: id });
+  async deleteUser(id: string): Promise<boolean> {
+    const result = await this.dbUsersRepository.delete({ id: id });
+    return result.affected === 1;
   }
 }
