@@ -56,8 +56,8 @@ export class AuthRepository {
   async findUserByLoginOrEmail(loginOrEmail: string) {
     const queryBuilder = await this.dbUsersRepository
       .createQueryBuilder('u')
-      .where({ 'u.login': loginOrEmail })
-      .orWhere({ 'u.email': loginOrEmail });
+      .where({ login: loginOrEmail })
+      .orWhere({ email: loginOrEmail });
     return queryBuilder.getOne();
   }
 
