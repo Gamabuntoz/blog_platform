@@ -22,7 +22,7 @@ export class SAUsersRepository {
     }
     if (queryData.searchEmailTerm || queryData.searchLoginTerm) {
       queryBuilder.where(
-        "u.email ILIKE '%' || :emailTerm || '%' OR u.login ILIKE '%' || :loginTerm || '%'",
+        "email ILIKE '%' || :emailTerm || '%' OR login ILIKE '%' || :loginTerm || '%'",
         {
           emailTerm: queryData.searchEmailTerm,
           loginTerm: queryData.searchLoginTerm,
@@ -43,7 +43,7 @@ export class SAUsersRepository {
     }
     if (queryData.searchEmailTerm || queryData.searchLoginTerm) {
       queryBuilder.where(
-        "u.email ILIKE '%' || :emailTerm || '%' OR u.login ILIKE '%' || :loginTerm || '%'",
+        "email ILIKE '%' || :emailTerm || '%' OR login ILIKE '%' || :loginTerm || '%'",
         {
           emailTerm: queryData.searchEmailTerm,
           loginTerm: queryData.searchLoginTerm,

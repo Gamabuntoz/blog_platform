@@ -91,7 +91,7 @@ export class AuthRepository {
       { id: id },
       {
         emailConfirmationCode: newCode,
-        emailConfirmExpirationDate: newDate.toISOString,
+        emailConfirmExpirationDate: newDate.toISOString(),
       },
     );
   }
