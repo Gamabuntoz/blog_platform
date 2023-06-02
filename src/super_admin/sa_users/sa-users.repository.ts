@@ -16,12 +16,12 @@ export class SAUsersRepository {
     if (queryData.sortBy) {
       sortBy = queryData.sortBy;
     }
-    const queryBuilder = this.dbUsersRepository.createQueryBuilder('u');
+    const queryBuilder = await this.dbUsersRepository.createQueryBuilder('u');
     if (queryData.banStatus) {
       queryBuilder.where({ userIsBanned: queryData.banStatus });
     }
     if (queryData.searchEmailTerm || queryData.searchLoginTerm) {
-      queryBuilder.where(
+      queryBuilder.andWhere(
         "email ILIKE '%' || :emailTerm || '%' OR login ILIKE '%' || :loginTerm || '%'",
         {
           emailTerm: queryData.searchEmailTerm,
@@ -37,7 +37,7 @@ export class SAUsersRepository {
   }
 
   async totalCountUsers(queryData) {
-    const queryBuilder = this.dbUsersRepository.createQueryBuilder('u');
+    const queryBuilder = await this.dbUsersRepository.createQueryBuilder('u');
     if (queryData.banStatus) {
       queryBuilder.where({ userIsBanned: queryData.banStatus });
     }
