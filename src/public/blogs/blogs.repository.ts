@@ -1,58 +1,66 @@
 import { Injectable } from '@nestjs/common';
 import { QueryBlogsDTO } from './applications/blogs.dto';
-import { InjectDataSource } from '@nestjs/typeorm';
-import { DataSource } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Blogs } from '../../blogger/blogger_blogs/applications/blogger-blogs.entity';
 
 @Injectable()
 export class BlogsRepository {
-  constructor(@InjectDataSource() protected dataSource: DataSource) {}
+  constructor(
+    @InjectRepository(Blogs)
+    private readonly dbBlogsRepository: Repository<Blogs>,
+  ) {}
 
-  async findAllBlogs(filter: any, queryData: QueryBlogsDTO) {
+  async findAllBlogs(queryData: QueryBlogsDTO) {
     let sortBy = 'createdAt';
     if (queryData.sortBy) {
       sortBy = queryData.sortBy;
     }
-    const searchNameTerm = filter.searchNameTerm ? filter.searchNameTerm : null;
-    return this.dataSource.query(
-      `
-      SELECT * FROM "blogs" 
-      WHERE "blogIsBanned" = $1 AND
-        ($2::VARCHAR is null OR LOWER("name") ILIKE  '%' || $2::VARCHAR || '%')
-      ORDER BY "${sortBy}" ${queryData.sortDirection}
-      LIMIT $3
-      OFFSET $4
-      `,
-      [
-        filter.blogIsBanned,
-        searchNameTerm,
-        queryData.pageSize,
-        (queryData.pageNumber - 1) * queryData.pageSize,
-      ],
-    );
+    const direction = queryData.sortDirection.toUpperCase();
+    try {
+      const queryBuilder = await this.dbBlogsRepository
+        .createQueryBuilder('b')
+        .where({ blogIsBanned: false });
+      if (queryData.searchNameTerm) {
+        queryBuilder.where(
+          `"blogIsBanned" = false AND name ILIKE '%' || :nameTerm || '%'`,
+          {
+            nameTerm: queryData.searchNameTerm,
+          },
+        );
+      }
+      queryBuilder
+        .orderBy(`b.${sortBy}`, (direction as 'ASC') || 'DESC')
+        .limit(queryData.pageSize)
+        .offset((queryData.pageNumber - 1) * queryData.pageSize);
+      return queryBuilder.getMany();
+    } catch (e) {
+      console.log(e.message);
+      console.log('catch in the total count blogs');
+    }
   }
 
-  async totalCountBlogs(filter: any) {
-    const searchNameTerm = filter.searchNameTerm ? filter.searchNameTerm : null;
-    const result = await this.dataSource.query(
-      `
-      SELECT COUNT("blogs") 
-      FROM "blogs"
-      WHERE "blogIsBanned" = $1 AND
-        ($2::VARCHAR is null OR LOWER("name") ILIKE  '%' || $2::VARCHAR || '%')
-      `,
-      [filter.blogIsBanned, searchNameTerm],
-    );
-    return result[0].count;
+  async totalCountBlogs(queryData: QueryBlogsDTO) {
+    try {
+      const queryBuilder = await this.dbBlogsRepository
+        .createQueryBuilder('b')
+        .where({ blogIsBanned: false });
+      if (queryData.searchNameTerm) {
+        queryBuilder.where(
+          `"blogIsBanned" = false AND name ILIKE '%' || :nameTerm || '%'`,
+          {
+            nameTerm: queryData.searchNameTerm,
+          },
+        );
+      }
+      return queryBuilder.getCount();
+    } catch (e) {
+      console.log(e.message);
+      console.log('catch in the total count blogs');
+    }
   }
 
   async findBlogById(id: string) {
-    const result = await this.dataSource.query(
-      `
-      SELECT * FROM "blogs"
-      WHERE "id" = $1
-      `,
-      [id],
-    );
-    return result[0];
+    return this.dbBlogsRepository.findOne({ where: { id: id } });
   }
 }

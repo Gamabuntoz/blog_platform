@@ -4,6 +4,7 @@ import { PostsRepository } from '../../posts.repository';
 import { Result, ResultCode } from '../../../../helpers/contract';
 import { PostLikes } from '../posts-likes.entity';
 import { v4 as uuidv4 } from 'uuid';
+import { AuthRepository } from '../../../auth/auth.repository';
 
 export class UpdatePostLikeStatusCommand {
   constructor(
@@ -17,7 +18,10 @@ export class UpdatePostLikeStatusCommand {
 export class UpdatePostLikeStatusUseCases
   implements ICommandHandler<UpdatePostLikeStatusCommand>
 {
-  constructor(private postsRepository: PostsRepository) {}
+  constructor(
+    private postsRepository: PostsRepository,
+    private usersRepository: AuthRepository,
+  ) {}
 
   async execute(
     command: UpdatePostLikeStatusCommand,
@@ -54,11 +58,13 @@ export class UpdatePostLikeStatusUseCases
     userId: string,
   ): Promise<boolean> {
     const post = await this.postsRepository.findPostById(postId);
+    const user = await this.usersRepository.findUserById(userId);
     if (!post) return false;
+    if (!user) return false;
     const postLike: PostLikes = {
       id: uuidv4(),
-      user: userId,
-      post: postId,
+      user: user,
+      post: post,
       status: likeStatus,
       addedAt: new Date().toISOString(),
     };

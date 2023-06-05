@@ -39,7 +39,7 @@ export class SABlogsService {
             b.createdAt,
             b.isMembership,
             {
-              userId: b.ownerId,
+              userId: b.user.id,
               userLogin: b.ownerLogin,
             },
             {

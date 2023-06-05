@@ -133,7 +133,7 @@ export class PostsService {
         'post not found',
       );
     const checkBlog: Blogs = await this.bloggerBlogsRepository.findBlogById(
-      postById.blogId,
+      postById.blog.id,
     );
     if (checkBlog.blogIsBanned)
       return new Result<PostInfoDTO>(

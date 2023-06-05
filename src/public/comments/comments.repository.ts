@@ -4,51 +4,24 @@ import { QueryPostsDTO } from '../posts/applications/posts.dto';
 import { InputCommentDTO } from './applications/comments.dto';
 import { CommentLikes } from './applications/comments-likes.entity';
 import { QueryCommentsDTO } from '../../blogger/blogger_blogs/applications/blogger-blogs.dto';
-import { InjectDataSource } from '@nestjs/typeorm';
-import { DataSource } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class CommentsRepository {
-  constructor(@InjectDataSource() protected dataSource: DataSource) {}
+  constructor(
+    @InjectRepository(Comments)
+    private readonly dbCommentsRepository: Repository<Comments>,
+    @InjectRepository(CommentLikes)
+    private readonly dbCommentLikesRepository: Repository<CommentLikes>,
+  ) {}
 
   async findCommentById(id: string) {
-    const result = await this.dataSource.query(
-      `
-      SELECT * FROM "comments"
-      WHERE "id" = $1
-      `,
-      [id],
-    );
-    return result[0];
-  }
-
-  async findAllCommentLikes(id: string, status: string) {
-    return this.dataSource.query(
-      `
-      SELECT * FROM "comment_likes"
-      WHERE "commentId" = $1 AND "status" = $2
-       `,
-      [id, status],
-    );
+    return this.dbCommentsRepository.findOne({ where: { id } });
   }
 
   async createComment(newComment: Comments) {
-    await this.dataSource.query(
-      `
-      INSERT INTO "comments"
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8);
-      `,
-      [
-        newComment.id,
-        newComment.content,
-        newComment.createdAt,
-        newComment.userLogin,
-        newComment.likeCount,
-        newComment.dislikeCount,
-        newComment.user,
-        newComment.post,
-      ],
-    );
+    await this.dbCommentsRepository.insert(newComment);
     return newComment;
   }
 
@@ -56,87 +29,57 @@ export class CommentsRepository {
     commentId: string,
     likeStatus: string,
     userId: string,
-  ) {
-    const result = await this.dataSource.query(
-      `
-      UPDATE "comment_likes"
-      SET "status" = $1
-      WHERE "commentId" = $2 AND "userId" = $3
-      `,
-      [likeStatus, commentId, userId],
-    );
-    await this.changeCountCommentLike(commentId);
-    return result[1] === 1;
+  ): Promise<boolean> {
+    const queryBuilder = await this.dbCommentLikesRepository
+      .createQueryBuilder('cl')
+      .update({ status: likeStatus })
+      .where({ comment: commentId, user: userId });
+    const result = await queryBuilder.execute();
+    return result.affected === 1;
   }
 
   async setCommentLike(newCommentLike: CommentLikes) {
-    await this.dataSource.query(
-      `
-      INSERT INTO "comment_likes"
-      VALUES ($1, $2, $3, $4, $5);
-      `,
-      [
-        newCommentLike.id,
-        newCommentLike.status,
-        newCommentLike.addedAt,
-        newCommentLike.user,
-        newCommentLike.comment,
-      ],
-    );
-    await this.changeCountCommentLike(newCommentLike.comment);
+    await this.dbCommentLikesRepository.insert(newCommentLike);
+    await this.changeCountCommentLike(newCommentLike.comment.id);
     return newCommentLike;
   }
 
   async countLikeCommentStatusInfo(commentId: string, status: string) {
-    const result = await this.dataSource.query(
-      `
-      SELECT COUNT("comment_likes") 
-      FROM "comment_likes"
-      WHERE "commentId" = $1 AND "status" = $2
-      `,
-      [commentId, status],
-    );
-    return result[0].count;
+    const queryBuilder = await this.dbCommentLikesRepository
+      .createQueryBuilder('cl')
+      .where({ comment: commentId, status: status });
+    return queryBuilder.getCount();
   }
 
-  async changeCountCommentLike(commentId: string) {
+  async changeCountCommentLike(commentId: string): Promise<boolean> {
     const likeCount = await this.countLikeCommentStatusInfo(commentId, 'Like');
     const dislikeCount = await this.countLikeCommentStatusInfo(
       commentId,
       'Dislike',
     );
-    const result = await this.dataSource.query(
-      `
-      UPDATE "comments"
-      SET "likeCount" = $1, "dislikeCount" = $2
-      WHERE id = $3
-      `,
-      [likeCount, dislikeCount, commentId],
+    const result = await this.dbCommentsRepository.update(
+      { id: commentId },
+      { likeCount, dislikeCount },
     );
-    return result[1] === 1;
+    return result.affected === 1;
   }
 
-  async updateComment(id: string, inputData: InputCommentDTO) {
-    const result = await this.dataSource.query(
-      `
-      UPDATE "comments"
-      SET "content" = $1
-      WHERE id = $2
-      `,
-      [inputData.content, id],
+  async updateComment(
+    id: string,
+    inputData: InputCommentDTO,
+  ): Promise<boolean> {
+    const result = await this.dbCommentsRepository.update(
+      { id },
+      {
+        content: inputData.content,
+      },
     );
-    return result[1] === 1;
+    return result.affected === 1;
   }
 
-  async deleteComment(id: string) {
-    const result = await this.dataSource.query(
-      `
-      DELETE FROM "comments"
-      WHERE "id" = $1
-      `,
-      [id],
-    );
-    return result[1] === 1;
+  async deleteComment(id: string): Promise<boolean> {
+    const result = await this.dbCommentsRepository.delete({ id: id });
+    return result.affected === 1;
   }
 
   async findAllCommentsByPostId(id: string, queryData: QueryPostsDTO) {
@@ -144,16 +87,14 @@ export class CommentsRepository {
     if (queryData.sortBy) {
       sortBy = queryData.sortBy;
     }
-    return this.dataSource.query(
-      `
-      SELECT * FROM "comments" 
-      WHERE "postId" = $1
-      ORDER BY "${sortBy}" ${queryData.sortDirection}
-      LIMIT $2
-      OFFSET $3
-      `,
-      [id, queryData.pageSize, (queryData.pageNumber - 1) * queryData.pageSize],
-    );
+    const direction = queryData.sortDirection.toUpperCase();
+    const queryBuilder = await this.dbCommentsRepository
+      .createQueryBuilder('c')
+      .where({ post: id })
+      .orderBy(`c.${sortBy}`, (direction as 'ASC') || 'DESC')
+      .limit(queryData.pageSize)
+      .offset((queryData.pageNumber - 1) * queryData.pageSize);
+    return queryBuilder.getMany();
   }
 
   async findAllCommentsForAllBloggerBlogsAllPosts(
@@ -164,68 +105,50 @@ export class CommentsRepository {
     if (queryData.sortBy) {
       sortBy = queryData.sortBy;
     }
-    return this.dataSource.query(
-      `
-      SELECT * FROM "comments" 
-      WHERE "postId" IN (
-            SELECT "id" FROM "posts" 
-            WHERE "blogId" IN (   
+    const direction = queryData.sortDirection.toUpperCase();
+    const queryBuilder = await this.dbCommentsRepository
+      .createQueryBuilder('c')
+      .where(
+        `post IN (
+                SELECT "id" FROM "posts" 
+                WHERE "blog" IN (
                     SELECT "id"     
                     FROM "blogs" 
-                    WHERE "ownerId" = $1
-                    )
-            )
-      ORDER BY "${sortBy}" ${queryData.sortDirection}
-      LIMIT $2
-      OFFSET $3
-      `,
-      [
-        ownerId,
-        queryData.pageSize,
-        (queryData.pageNumber - 1) * queryData.pageSize,
-      ],
-    );
+                    WHERE "user" = :ownerId))`,
+        { ownerId },
+      )
+      .orderBy(`c.${sortBy}`, (direction as 'ASC') || 'DESC')
+      .limit(queryData.pageSize)
+      .offset((queryData.pageNumber - 1) * queryData.pageSize);
+    return queryBuilder.getMany();
   }
 
   async findCommentLikeByCommentAndUserId(commentId: string, userId: string) {
-    const result = await this.dataSource.query(
-      `
-      SELECT * FROM "comment_likes"
-      WHERE "commentId" = $1 AND "userId" = $2
-       `,
-      [commentId, userId],
-    );
-    return result[0];
+    const queryBuilder = await this.dbCommentLikesRepository
+      .createQueryBuilder('cl')
+      .where({ comment: commentId, user: userId });
+    return queryBuilder.getOne();
   }
 
   async totalCountComments(id: string) {
-    const result = await this.dataSource.query(
-      `
-      SELECT COUNT("comments") 
-      FROM "comments"
-      WHERE "postId" = $1
-      `,
-      [id],
-    );
-    return result[0].count;
+    const queryBuilder = await this.dbCommentsRepository
+      .createQueryBuilder('c')
+      .where({ post: id });
+    return queryBuilder.getCount();
   }
 
   async totalCountCommentsForAllBloggerBlogsAllPosts(ownerId: string) {
-    const result = await this.dataSource.query(
-      `
-      SELECT COUNT("comments") 
-      FROM "comments"
-      WHERE "postId" IN (
-            SELECT "id" FROM "posts" 
-            WHERE "blogId" IN (   
+    const queryBuilder = await this.dbCommentsRepository
+      .createQueryBuilder('c')
+      .where(
+        `post IN (
+                SELECT "id" FROM "posts" 
+                WHERE "blog" IN (
                     SELECT "id"     
                     FROM "blogs" 
-                    WHERE "ownerId" = $1
-                    )
-            )
-      `,
-      [ownerId],
-    );
-    return result[0].count;
+                    WHERE "user" = :ownerId))`,
+        { ownerId },
+      );
+    return queryBuilder.getCount();
   }
 }

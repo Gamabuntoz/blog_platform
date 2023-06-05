@@ -1,75 +1,79 @@
 import { Injectable } from '@nestjs/common';
 import { QueryBlogsDTO } from '../../public/blogs/applications/blogs.dto';
-import { InjectDataSource } from '@nestjs/typeorm';
-import { DataSource } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Blogs } from '../../blogger/blogger_blogs/applications/blogger-blogs.entity';
+import { Users } from '../sa_users/applications/users.entity';
 
 @Injectable()
 export class SABlogsRepository {
-  constructor(@InjectDataSource() protected dataSource: DataSource) {}
+  constructor(
+    @InjectRepository(Blogs)
+    private readonly dbBlogsRepository: Repository<Blogs>,
+  ) {}
 
   async findBlogById(id: string) {
-    const result = await this.dataSource.query(
-      `
-      SELECT * FROM "blogs"
-      WHERE "id" = $1
-      `,
-      [id],
-    );
-    return result[0];
+    return this.dbBlogsRepository.findOne({ where: { id: id } });
   }
 
-  async banBlogById(id: string, status: boolean) {
-    const result = await this.dataSource.query(
-      `
-      UPDATE "blogs"
-      SET "blogIsBanned" = $1, "blogBanDate" = $2
-      WHERE id = $3
-      `,
-      [status, status ? new Date().toISOString() : null, id],
+  async banBlogById(id: string, status: boolean): Promise<boolean> {
+    const result = await this.dbBlogsRepository.update(
+      { id: id },
+      {
+        blogIsBanned: status,
+        blogBanDate: status ? new Date().toISOString() : null,
+      },
     );
-    return result[1] === 1;
+    return result.affected === 1;
   }
 
   async findAllBlogs(filter: any, sortBy: string, queryData: QueryBlogsDTO) {
-    const searchNameTerm = filter.searchNameTerm ? filter.searchNameTerm : null;
-    return this.dataSource.query(
-      `
-      SELECT * FROM "blogs" 
-      WHERE ($1::VARCHAR IS NULL OR LOWER("name") ILIKE  '%' || $1::VARCHAR || '%')
-      ORDER BY "${sortBy}" ${queryData.sortDirection}
-      LIMIT $2
-      OFFSET $3
-      `,
-      [
-        searchNameTerm,
-        queryData.pageSize,
-        (queryData.pageNumber - 1) * queryData.pageSize,
-      ],
-    );
+    const direction = queryData.sortDirection.toUpperCase();
+    try {
+      const queryBuilder = await this.dbBlogsRepository.createQueryBuilder('b');
+      if (filter.searchNameTerm) {
+        queryBuilder.where("name ILIKE '%' || :nameTerm || '%'", {
+          nameTerm: filter.searchNameTerm,
+        });
+      }
+      queryBuilder
+        .orderBy(`b.${sortBy}`, (direction as 'ASC') || 'DESC')
+        .limit(queryData.pageSize)
+        .offset((queryData.pageNumber - 1) * queryData.pageSize);
+      return queryBuilder.getMany();
+    } catch (e) {
+      console.log(e.message);
+      console.log('catch in the find all blogs in SA repo');
+    }
   }
 
   async totalCountBlogs(filter: any) {
-    const searchNameTerm = filter.searchNameTerm ? filter.searchNameTerm : null;
-    const result = await this.dataSource.query(
-      `
-      SELECT COUNT("blogs") 
-      FROM "blogs"
-      WHERE ($1::VARCHAR is null OR LOWER("name") ILIKE  '%' || $1::VARCHAR || '%')
-      `,
-      [searchNameTerm],
-    );
-    return result[0].count;
+    try {
+      const queryBuilder = await this.dbBlogsRepository.createQueryBuilder('b');
+      if (filter.searchNameTerm) {
+        queryBuilder.where("name ILIKE '%' || :nameTerm || '%'", {
+          nameTerm: filter.searchNameTerm,
+        });
+      }
+      return queryBuilder.getCount();
+    } catch (e) {
+      console.log(e.message);
+      console.log('catch in the total count blogs in SA repo');
+    }
   }
 
-  async bindBlogWithUser(blogId: string, userId: string, userLogin: string) {
-    const result = await this.dataSource.query(
-      `
-      UPDATE "blogs"
-      SET "ownerId" = $1, "ownerLogin" = $2
-      WHERE id = $3
-      `,
-      [userId, userLogin, blogId],
+  async bindBlogWithUser(
+    blogId: string,
+    user: Users,
+    userLogin: string,
+  ): Promise<boolean> {
+    const result = await this.dbBlogsRepository.update(
+      { id: blogId },
+      {
+        user: user,
+        ownerLogin: userLogin,
+      },
     );
-    return result[1] === 1;
+    return result.affected === 1;
   }
 }

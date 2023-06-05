@@ -3,6 +3,9 @@ import { CommentsRepository } from '../../comments.repository';
 import { InputLikeStatusDTO } from '../../../posts/applications/posts.dto';
 import { Result, ResultCode } from '../../../../helpers/contract';
 import { v4 as uuidv4 } from 'uuid';
+import { Comments } from '../comments.entity';
+import { CommentLikes } from '../comments-likes.entity';
+import { AuthRepository } from '../../../auth/auth.repository';
 
 export class UpdateCommentLikeStatusCommand {
   constructor(
@@ -16,7 +19,10 @@ export class UpdateCommentLikeStatusCommand {
 export class UpdateCommentLikeStatusUseCases
   implements ICommandHandler<UpdateCommentLikeStatusCommand>
 {
-  constructor(private commentsRepository: CommentsRepository) {}
+  constructor(
+    private commentsRepository: CommentsRepository,
+    private usersRepository: AuthRepository,
+  ) {}
 
   async execute(
     command: UpdateCommentLikeStatusCommand,
@@ -61,11 +67,12 @@ export class UpdateCommentLikeStatusUseCases
     userId: string,
   ): Promise<boolean> {
     const comment = await this.commentsRepository.findCommentById(commentId);
+    const user = await this.usersRepository.findUserById(userId);
     if (!comment) return false;
-    const commentLike = {
+    const commentLike: CommentLikes = {
       id: uuidv4(),
-      user: userId,
-      comment: commentId,
+      user: user,
+      comment: comment,
       status: likeStatus,
       addedAt: new Date().toISOString(),
     };

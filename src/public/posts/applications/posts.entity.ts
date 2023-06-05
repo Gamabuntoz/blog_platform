@@ -1,5 +1,14 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { Blogs } from '../../../blogger/blogger_blogs/applications/blogger-blogs.entity';
+import { Comments } from '../../comments/applications/comments.entity';
+import { PostLikes } from './posts-likes.entity';
 
 @Entity()
 export class Posts {
@@ -11,8 +20,9 @@ export class Posts {
   shortDescription: string;
   @Column()
   content: string;
-  @ManyToOne(() => Blogs, (Blog) => Blog.id, { cascade: true })
-  blog: string;
+  @ManyToOne(() => Blogs, (b) => b.id, { cascade: true })
+  @JoinColumn({ name: 'blogId' })
+  blog: Blogs;
   @Column()
   blogName: string;
   @Column()
@@ -21,4 +31,8 @@ export class Posts {
   likeCount: number;
   @Column()
   dislikeCount: number;
+  @OneToMany(() => Comments, (c) => c.post, {})
+  comments: Comments[];
+  @OneToMany(() => PostLikes, (pl) => pl.post, {})
+  postLikes: PostLikes[];
 }

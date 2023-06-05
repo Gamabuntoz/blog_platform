@@ -11,18 +11,24 @@ export class DevicesRepository {
   ) {}
 
   async findAllUserDevices(currentUserId: string) {
-    return this.dbDevicesRepository.find({ where: { user: currentUserId } });
+    const queryBuilder = await this.dbDevicesRepository
+      .createQueryBuilder('d')
+      .where({ user: currentUserId });
+    return queryBuilder.getMany();
   }
 
   async findDeviceByDateAndUserId(issueAt: number, userId: string) {
     const queryBuilder = await this.dbDevicesRepository
       .createQueryBuilder('d')
-      .where({ 'd.issueAt': issueAt, 'd.userId': userId });
+      .where({ issueAt: issueAt, user: userId });
     return queryBuilder.getOne();
   }
 
   async findDeviceByDeviceId(deviceId: string) {
-    return this.dbDevicesRepository.findOne({ where: { id: deviceId } });
+    return this.dbDevicesRepository.findOne({
+      where: { id: deviceId },
+      relations: ['user'],
+    });
   }
 
   async insertDeviceInfo(device: Devices) {
@@ -39,25 +45,27 @@ export class DevicesRepository {
       .createQueryBuilder('d')
       .update()
       .set({ issueAt: newIssueAt })
-      .where({ 'd.issueAt': oldIssueAt, 'd.userId': userId });
+      .where({ issueAt: oldIssueAt, user: userId });
     return queryBuilder.execute();
   }
 
   async deleteAllDevicesExceptCurrent(issueAt: number, userId: string) {
     const queryBuilder = await this.dbDevicesRepository
       .createQueryBuilder('d')
-      .where('d.issueAt != :issueAt AND d.userId = :userId', {
+      .delete()
+      .where('issueAt != :issueAt AND userId = :userId', {
         issueAt,
         userId,
       });
-    return queryBuilder.delete();
+    return queryBuilder.execute();
   }
 
   async deleteDevice(issueAt: number, userId: string) {
     const queryBuilder = await this.dbDevicesRepository
       .createQueryBuilder('d')
-      .where({ 'd.issueAt': issueAt, 'd.userId': userId });
-    return queryBuilder.delete();
+      .delete()
+      .where({ issueAt: issueAt, user: userId });
+    return queryBuilder.execute();
   }
 
   async deleteDeviceById(deviceId: string) {

@@ -23,7 +23,8 @@ export class DeleteDeviceSessionUseCases
         null,
         'Device info not found',
       );
-    if (device.user !== command.tokenPayload.userId)
+    console.log(device, 'delete one');
+    if (device.user.id !== command.tokenPayload.userId)
       return new Result<boolean>(
         ResultCode.Forbidden,
         null,

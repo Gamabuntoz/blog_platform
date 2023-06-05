@@ -59,6 +59,12 @@ export class RegistrationUserUseCases
       userIsBanned: false,
       userBanReason: null,
       userBanDate: null,
+      devices: [],
+      comments: [],
+      commentLikes: [],
+      postLikes: [],
+      blogs: [],
+      banUserForBlog: [],
     };
     await this.authRepository.createUser(newUser);
     return new UserInfoDTO(

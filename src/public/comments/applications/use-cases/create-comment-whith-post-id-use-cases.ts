@@ -42,7 +42,7 @@ export class CreateCommentWithPostIdUseCases
     const checkUserForBanForBlog =
       await this.bloggerUsersRepository.checkUserForBan(
         command.userId,
-        postById.blogId,
+        postById.blog.id,
       );
     if (checkUserForBanForBlog)
       return new Result<CommentInfoDTO>(
@@ -52,20 +52,21 @@ export class CreateCommentWithPostIdUseCases
       );
     const newComment: Comments = {
       id: uuidv4(),
-      post: command.postId,
+      post: postById,
       content: command.content,
-      user: command.userId,
+      user: user,
       userLogin: user.login,
       createdAt: new Date().toISOString(),
       likeCount: 0,
       dislikeCount: 0,
+      commentLikes: [],
     };
     await this.commentsRepository.createComment(newComment);
     const commentView = new CommentInfoDTO(
       newComment.id,
       newComment.content,
       {
-        userId: newComment.user,
+        userId: newComment.user.id,
         userLogin: newComment.userLogin,
       },
       newComment.createdAt,

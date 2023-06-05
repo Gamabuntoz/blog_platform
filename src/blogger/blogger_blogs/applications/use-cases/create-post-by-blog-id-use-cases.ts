@@ -38,7 +38,8 @@ export class CreatePostWithBlogIdUseCases
         null,
         'Blog not found',
       );
-    if (blogById.ownerId !== command.currentUserId)
+    console.log(blogById);
+    if (blogById.user.id !== command.currentUserId)
       return new Result<PostInfoDTO>(
         ResultCode.Forbidden,
         null,
@@ -49,11 +50,13 @@ export class CreatePostWithBlogIdUseCases
       title: command.inputData.title,
       shortDescription: command.inputData.shortDescription,
       content: command.inputData.content,
-      blog: blogById.id,
+      blog: blogById,
       blogName: blogById.name,
       createdAt: new Date().toISOString(),
       likeCount: 0,
       dislikeCount: 0,
+      comments: [],
+      postLikes: [],
     };
     await this.postsRepository.createPost(newPost);
     const postView = new PostInfoDTO(
@@ -61,7 +64,7 @@ export class CreatePostWithBlogIdUseCases
       newPost.title,
       newPost.shortDescription,
       newPost.content,
-      newPost.blog,
+      newPost.blog.id,
       newPost.blogName,
       newPost.createdAt,
       {

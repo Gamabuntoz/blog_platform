@@ -31,10 +31,12 @@ export class CreateBlogUseCases implements ICommandHandler<CreateBlogCommand> {
       description: command.inputData.description,
       websiteUrl: command.inputData.websiteUrl,
       isMembership: false,
-      owner: command.currentUserId,
+      user: user,
       ownerLogin: user.login,
       blogIsBanned: false,
       blogBanDate: null,
+      post: [],
+      banUserForBlog: [],
     };
     await this.bloggerBlogsRepository.createBlog(newBlog);
     const blogView = new BloggerBlogInfoDTO(

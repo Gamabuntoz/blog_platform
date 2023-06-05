@@ -1,5 +1,11 @@
 import { Users } from 'src/super_admin/sa_users/applications/users.entity';
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { Posts } from './posts.entity';
 
 @Entity()
@@ -10,8 +16,10 @@ export class PostLikes {
   status: string;
   @Column()
   addedAt: string;
-  @ManyToOne(() => Users, (User) => User.id, { cascade: true })
-  user: string;
-  @ManyToOne(() => Posts, (Post) => Post.id, { cascade: true })
-  post: string;
+  @ManyToOne(() => Users, (u) => u.id, { cascade: true })
+  @JoinColumn({ name: 'userId' })
+  user: Users;
+  @ManyToOne(() => Posts, (p) => p.id, { cascade: true })
+  @JoinColumn({ name: 'postId' })
+  post: Posts;
 }

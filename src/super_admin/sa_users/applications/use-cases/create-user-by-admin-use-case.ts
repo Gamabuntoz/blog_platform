@@ -46,6 +46,12 @@ export class CreateUserByAdminUseCases
       userIsBanned: false,
       userBanReason: null,
       userBanDate: null,
+      devices: [],
+      comments: [],
+      commentLikes: [],
+      postLikes: [],
+      blogs: [],
+      banUserForBlog: [],
     };
     await this.saUsersRepository.createUser(newUser);
     const userView = new SAUserInfoDTO(

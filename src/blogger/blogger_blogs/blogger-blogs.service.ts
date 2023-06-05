@@ -45,13 +45,13 @@ export class BloggerBlogsService {
               c.id,
               currentUserId,
             );
-          const post = await this.postsRepository.findPostById(c.postId);
+          const post = await this.postsRepository.findPostById(c.post.id);
           return new BloggerCommentInfoDTO(
             c.id,
             c.content,
             c.createdAt,
             {
-              userId: c.userId,
+              userId: c.user.id,
               userLogin: c.userLogin,
             },
             {
@@ -64,7 +64,7 @@ export class BloggerBlogsService {
             {
               id: post.id,
               title: post.title,
-              blogId: post.blogId,
+              blogId: post.blog.id,
               blogName: post.blogName,
             },
           );
@@ -82,7 +82,7 @@ export class BloggerBlogsService {
     queryData: QueryBlogsDTO,
     currentUserId: string,
   ): Promise<Result<Paginated<BloggerBlogInfoDTO[]>>> {
-    const filter: any = { ownerId: currentUserId };
+    const filter: any = { userId: currentUserId };
     filter['searchNameTerm'] = queryData.searchNameTerm
       ? queryData.searchNameTerm
       : null;

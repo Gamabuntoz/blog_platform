@@ -77,6 +77,12 @@ import { CreateCommentWithPostIdUseCases } from './public/comments/applications/
 import { CommentsRepository } from './public/comments/comments.repository';
 import { Users } from './super_admin/sa_users/applications/users.entity';
 import { Devices } from './public/devices/applications/devices.entity';
+import { Blogs } from './blogger/blogger_blogs/applications/blogger-blogs.entity';
+import { Comments } from './public/comments/applications/comments.entity';
+import { CommentLikes } from './public/comments/applications/comments-likes.entity';
+import { PostLikes } from './public/posts/applications/posts-likes.entity';
+import { BanUserForBlog } from './blogger/blogger_users/applications/banned-users-for-blogs.entity';
+import { Posts } from './public/posts/applications/posts.entity';
 
 const useCases = [
   CreateCommentWithPostIdUseCases,
@@ -176,7 +182,16 @@ const controllers = [
       useClass: TypeOrmConfig,
       imports: [ConfigModule],
     }),
-    TypeOrmModule.forFeature([Users, Devices]),
+    TypeOrmModule.forFeature([
+      Users,
+      Devices,
+      Blogs,
+      Posts,
+      Comments,
+      CommentLikes,
+      PostLikes,
+      BanUserForBlog,
+    ]),
   ],
   controllers: [...controllers],
   providers: [

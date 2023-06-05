@@ -24,7 +24,7 @@ export class UpdatePostUseCases implements ICommandHandler<UpdatePostCommand> {
     const blog = await this.bloggerBlogsRepository.findBlogById(command.blogId);
     if (!blog)
       return new Result<boolean>(ResultCode.NotFound, false, 'Blog not found');
-    if (blog.ownerId !== command.currentUserId)
+    if (blog.user.id !== command.currentUserId)
       return new Result<boolean>(ResultCode.Forbidden, false, 'Access denied');
     const updatedPost = await this.postsRepository.updatePost(
       command.postId,

@@ -16,43 +16,54 @@ export class SAUsersRepository {
     if (queryData.sortBy) {
       sortBy = queryData.sortBy;
     }
-    const queryBuilder = await this.dbUsersRepository.createQueryBuilder('u');
-    if (queryData.banStatus && queryData.banStatus !== 'all') {
-      const status = queryData.banStatus === 'banned';
-      queryBuilder.where({ userIsBanned: status });
+    const direction = queryData.sortDirection.toUpperCase();
+    try {
+      const queryBuilder = await this.dbUsersRepository.createQueryBuilder('u');
+      if (queryData.banStatus && queryData.banStatus !== 'all') {
+        const status = queryData.banStatus === 'banned';
+        queryBuilder.where({ userIsBanned: status });
+      }
+      if (queryData.searchEmailTerm || queryData.searchLoginTerm) {
+        queryBuilder.andWhere(
+          "email ILIKE '%' || :emailTerm || '%' OR login ILIKE '%' || :loginTerm || '%'",
+          {
+            emailTerm: queryData.searchEmailTerm,
+            loginTerm: queryData.searchLoginTerm,
+          },
+        );
+      }
+      queryBuilder
+        .orderBy(`u.${sortBy}`, (direction as 'ASC') || 'DESC')
+        .limit(queryData.pageSize)
+        .offset((queryData.pageNumber - 1) * queryData.pageSize);
+      return queryBuilder.getMany();
+    } catch (e) {
+      console.log(e.message);
+      console.log('catch in the find all users');
     }
-    if (queryData.searchEmailTerm || queryData.searchLoginTerm) {
-      queryBuilder.andWhere(
-        "email ILIKE '%' || :emailTerm || '%' OR login ILIKE '%' || :loginTerm || '%'",
-        {
-          emailTerm: queryData.searchEmailTerm,
-          loginTerm: queryData.searchLoginTerm,
-        },
-      );
-    }
-    queryBuilder
-      .orderBy(`u.${sortBy}`, queryData.sortDirection)
-      .limit(queryData.pageSize)
-      .offset((queryData.pageNumber - 1) * queryData.pageSize);
-    return queryBuilder.getMany();
   }
 
-  async totalCountUsers(queryData) {
-    const queryBuilder = await this.dbUsersRepository.createQueryBuilder('u');
-    if (queryData.banStatus && queryData.banStatus !== 'all') {
-      const status = queryData.banStatus === 'banned';
-      queryBuilder.where({ userIsBanned: status });
+  async totalCountUsers(queryData: QueryUsersDTO) {
+    try {
+      const queryBuilder = await this.dbUsersRepository.createQueryBuilder('u');
+      if (queryData.banStatus && queryData.banStatus !== 'all') {
+        const status = queryData.banStatus === 'banned';
+        queryBuilder.where({ userIsBanned: status });
+      }
+      if (queryData.searchEmailTerm || queryData.searchLoginTerm) {
+        queryBuilder.andWhere(
+          "email ILIKE '%' || :emailTerm || '%' OR login ILIKE '%' || :loginTerm || '%'",
+          {
+            emailTerm: queryData.searchEmailTerm,
+            loginTerm: queryData.searchLoginTerm,
+          },
+        );
+      }
+      return queryBuilder.getCount();
+    } catch (e) {
+      console.log(e.message);
+      console.log('catch in the total count users');
     }
-    if (queryData.searchEmailTerm || queryData.searchLoginTerm) {
-      queryBuilder.andWhere(
-        "email ILIKE '%' || :emailTerm || '%' OR login ILIKE '%' || :loginTerm || '%'",
-        {
-          emailTerm: queryData.searchEmailTerm,
-          loginTerm: queryData.searchLoginTerm,
-        },
-      );
-    }
-    return queryBuilder.getCount();
   }
 
   async createUser(newUser: Users) {

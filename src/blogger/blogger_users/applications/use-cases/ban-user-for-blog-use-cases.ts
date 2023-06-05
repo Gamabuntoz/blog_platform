@@ -32,7 +32,7 @@ export class BanUserForBlogUseCases
     );
     if (!blog)
       return new Result<boolean>(ResultCode.NotFound, false, 'Blog not found');
-    if (blog.ownerId !== command.currentUserId)
+    if (blog.user.id !== command.currentUserId)
       return new Result<boolean>(ResultCode.Forbidden, false, 'Access denied');
     const bannedUser: Users = await this.authRepository.findUserById(
       command.userId,

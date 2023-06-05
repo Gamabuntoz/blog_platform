@@ -1,4 +1,11 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  OneToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { Users } from '../../../super_admin/sa_users/applications/users.entity';
 import { Blogs } from '../../blogger_blogs/applications/blogger-blogs.entity';
 
@@ -6,7 +13,8 @@ import { Blogs } from '../../blogger_blogs/applications/blogger-blogs.entity';
 export class BanUserForBlog {
   @PrimaryGeneratedColumn('uuid')
   id: string;
-  @ManyToOne(() => Blogs, (Blog) => Blog.id, { cascade: true })
+  @OneToOne(() => Blogs, (b) => b.id, { cascade: true })
+  @JoinColumn({ name: 'blogId' })
   blog: string;
   @Column()
   isBanned: boolean;
@@ -16,7 +24,8 @@ export class BanUserForBlog {
   createdAt: string;
   @Column({ nullable: true })
   banReason: string | null;
-  @ManyToOne(() => Users, (User) => User.id, { cascade: true })
+  @OneToOne(() => Users, (u) => u.id, { cascade: true })
+  @JoinColumn({ name: 'userId' })
   user: string;
   @Column()
   userLogin: string;

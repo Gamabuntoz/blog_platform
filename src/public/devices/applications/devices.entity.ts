@@ -1,4 +1,10 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { Users } from '../../../super_admin/sa_users/applications/users.entity';
 
 @Entity()
@@ -13,6 +19,7 @@ export class Devices {
   ipAddress: string;
   @Column()
   deviceName: string;
-  @ManyToOne(() => Users, (User) => User.id, { onDelete: 'CASCADE' })
-  user: string;
+  @ManyToOne(() => Users, (u) => u.id, { cascade: true })
+  @JoinColumn({ name: 'userId' })
+  user: Users;
 }

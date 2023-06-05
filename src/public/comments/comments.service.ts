@@ -5,6 +5,7 @@ import { CommentLikes } from './applications/comments-likes.entity';
 import { Result, ResultCode } from '../../helpers/contract';
 import { AuthRepository } from '../auth/auth.repository';
 import { Users } from '../../super_admin/sa_users/applications/users.entity';
+import { Comments } from './applications/comments.entity';
 
 @Injectable()
 export class CommentsService {
@@ -24,7 +25,7 @@ export class CommentsService {
         null,
         'Comment not found',
       );
-    const user: Users = await this.authRepository.findUserById(comment.userId);
+    const user: Users = await this.authRepository.findUserById(comment.user.id);
     if (user.userIsBanned)
       return new Result<CommentInfoDTO>(
         ResultCode.NotFound,
@@ -61,7 +62,7 @@ export class CommentsService {
   }
 
   async createCommentViewInfo(
-    comment,
+    comment: Comments,
     likeStatusCurrentUser?: CommentLikes,
     countBannedLikesOwner?: number,
     countBannedDislikesOwner?: number,
@@ -70,7 +71,7 @@ export class CommentsService {
       comment.id,
       comment.content,
       {
-        userId: comment.userId,
+        userId: comment.user.id,
         userLogin: comment.userLogin,
       },
       comment.createdAt,

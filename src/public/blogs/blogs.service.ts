@@ -74,13 +74,8 @@ export class BlogsService {
   async findAllBlogs(
     queryData: QueryBlogsDTO,
   ): Promise<Result<Paginated<BlogInfoDTO[]>>> {
-    const filter: any = { blogIsBanned: false };
-    filter['searchNameTerm'] = queryData.searchNameTerm
-      ? queryData.searchNameTerm
-      : null;
-    const totalCount = await this.blogsRepository.totalCountBlogs(filter);
+    const totalCount = await this.blogsRepository.totalCountBlogs(queryData);
     const allBlogs: Blogs[] = await this.blogsRepository.findAllBlogs(
-      filter,
       queryData,
     );
     const paginatedBlogs = await Paginated.getPaginated<BlogInfoDTO[]>({

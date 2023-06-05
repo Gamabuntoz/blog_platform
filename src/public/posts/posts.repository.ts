@@ -1,32 +1,35 @@
 import { Injectable } from '@nestjs/common';
 import { Posts } from './applications/posts.entity';
 import { InputPostDTO, QueryPostsDTO } from './applications/posts.dto';
-import { InjectDataSource } from '@nestjs/typeorm';
-import { DataSource } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { PostLikes } from './applications/posts-likes.entity';
 
 @Injectable()
 export class PostsRepository {
-  constructor(@InjectDataSource() protected dataSource: DataSource) {}
+  constructor(
+    @InjectRepository(Posts)
+    private readonly dbPostsRepository: Repository<Posts>,
+    @InjectRepository(PostLikes)
+    private readonly dbPostLikesRepository: Repository<PostLikes>,
+  ) {}
 
   async findAllPosts(queryData: QueryPostsDTO) {
     let sortBy = 'createdAt';
     if (queryData.sortBy) {
       sortBy = queryData.sortBy;
     }
-    return this.dataSource.query(
-      `
-      SELECT * FROM "posts" 
-      WHERE "blogId" NOT IN (
-        SELECT "id" FROM "blogs"
-        WHERE "blogIsBanned" = true
+    const direction = queryData.sortDirection.toUpperCase();
+    const queryBuilder = await this.dbPostsRepository
+      .createQueryBuilder('p')
+      .where(
+        `blog NOT IN (SELECT "id" FROM "blogs"
+                      WHERE "blogIsBanned" = true)`,
       )
-      ORDER BY "${sortBy}" ${queryData.sortDirection}
-      LIMIT $1
-      OFFSET $2
-      `,
-      [queryData.pageSize, (queryData.pageNumber - 1) * queryData.pageSize],
-    );
+      .orderBy(`p.${sortBy}`, (direction as 'ASC') || 'DESC')
+      .limit(queryData.pageSize)
+      .offset((queryData.pageNumber - 1) * queryData.pageSize);
+    return queryBuilder.getMany();
   }
 
   async findAllPostsByBlogId(id: string, queryData: QueryPostsDTO) {
@@ -34,198 +37,121 @@ export class PostsRepository {
     if (queryData.sortBy) {
       sortBy = queryData.sortBy;
     }
-    return this.dataSource.query(
-      `
-      SELECT * FROM "posts" 
-      WHERE "blogId" = $1
-      ORDER BY "${sortBy}" ${queryData.sortDirection}
-      LIMIT $2
-      OFFSET $3
-      `,
-      [id, queryData.pageSize, (queryData.pageNumber - 1) * queryData.pageSize],
-    );
+    const direction = queryData.sortDirection.toUpperCase();
+    const queryBuilder = await this.dbPostsRepository
+      .createQueryBuilder('p')
+      .where({ blog: id })
+      .orderBy(`p.${sortBy}`, (direction as 'ASC') || 'DESC')
+      .limit(queryData.pageSize)
+      .offset((queryData.pageNumber - 1) * queryData.pageSize);
+    return queryBuilder.getMany();
   }
 
   async totalCountPostsExpectBanned() {
-    const result = await this.dataSource.query(
-      `
-      SELECT COUNT("posts") 
-      FROM "posts"
-      WHERE "blogId" NOT IN (
-        SELECT "id" FROM "blogs"
-        WHERE "blogIsBanned" = true
-      )
-      `,
-    );
-    return result[0].count;
+    const queryBuilder = await this.dbPostsRepository
+      .createQueryBuilder('p')
+      .where(
+        `blog NOT IN (
+                SELECT "id" FROM "blogs" 
+                WHERE "blogIsBanned" = true)`,
+      );
+    return queryBuilder.getCount();
   }
 
   async totalCountPostsByBlogId(blogId: string) {
-    const result = await this.dataSource.query(
-      `
-      SELECT COUNT("posts") 
-      FROM "posts"
-      WHERE "blogId" = $1
-      `,
-      [blogId],
-    );
-    return result[0].count;
+    const queryBuilder = await this.dbPostsRepository
+      .createQueryBuilder('p')
+      .where({ blog: blogId });
+    return queryBuilder.getCount();
   }
 
   async createPost(newPost: Posts) {
-    await this.dataSource.query(
-      `
-      INSERT INTO "posts"
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);
-      `,
-      [
-        newPost.id,
-        newPost.title,
-        newPost.shortDescription,
-        newPost.content,
-        newPost.blogName,
-        newPost.createdAt,
-        newPost.likeCount,
-        newPost.dislikeCount,
-        newPost.blog,
-      ],
-    );
+    await this.dbPostsRepository.insert(newPost);
     return newPost;
   }
 
   async findPostById(id: string) {
-    const result = await this.dataSource.query(
-      `
-      SELECT * FROM "posts"
-      WHERE "id" = $1
-      `,
-      [id],
-    );
-    return result[0];
+    return this.dbPostsRepository.findOne({
+      where: { id: id },
+    });
   }
 
-  async updatePost(id: string, inputPostData: InputPostDTO) {
-    const result = await this.dataSource.query(
-      `
-      UPDATE "posts"
-      SET "title" = $1, "shortDescription" = $2, "content" = $3
-      WHERE id = $4
-      `,
-      [
-        inputPostData.title,
-        inputPostData.shortDescription,
-        inputPostData.content,
-        id,
-      ],
+  async updatePost(id: string, inputPostData: InputPostDTO): Promise<boolean> {
+    const result = await this.dbPostsRepository.update(
+      { id: id },
+      {
+        title: inputPostData.title,
+        shortDescription: inputPostData.shortDescription,
+        content: inputPostData.content,
+      },
     );
-    return result[1] === 1;
+    return result.affected === 1;
   }
 
-  async deletePost(id: string) {
-    const result = await this.dataSource.query(
-      `
-      DELETE FROM "posts"
-      WHERE "id" = $1
-      `,
-      [id],
-    );
-    return result[1] === 1;
-  }
-
-  async findAllPostsByBlogIds(blogIds: string[]) {
-    return this.dataSource.query(
-      `
-      SELECT "id" FROM "posts" 
-      WHERE "blogId" IN (   
-            SELECT "id"     
-            FROM "blogs" 
-            WHERE "ownerId" = $1
-            )
-      `,
-      [blogIds],
-    );
+  async deletePost(id: string): Promise<boolean> {
+    const result = await this.dbPostsRepository.delete({ id: id });
+    return result.affected === 1;
   }
 
   async countLikePostStatusInfo(postId: string, status: string) {
-    const result = await this.dataSource.query(
-      `
-      SELECT COUNT("post_likes") 
-      FROM "post_likes"
-      WHERE "postId" = $1 AND "status" = $2
-      `,
-      [postId, status],
-    );
-    return result[0].count;
+    const queryBuilder = await this.dbPostLikesRepository
+      .createQueryBuilder('pl')
+      .where({ post: postId, status: status });
+    return queryBuilder.getCount();
   }
 
-  async updatePostLike(postId: string, likeStatus: string, userId: string) {
-    const result = await this.dataSource.query(
-      `
-      UPDATE "post_likes"
-      SET "status" = $1
-      WHERE "postId" = $2 AND "userId" = $3
-      `,
-      [likeStatus, postId, userId],
-    );
-    await this.changeCountPostLike(postId);
-    return result[1] === 1;
+  async updatePostLike(
+    postId: string,
+    likeStatus: string,
+    userId: string,
+  ): Promise<boolean> {
+    const queryBuilder = await this.dbPostLikesRepository
+      .createQueryBuilder('pl')
+      .update({ status: likeStatus })
+      .where({ post: postId, user: userId });
+    const result = await queryBuilder.execute();
+    return result.affected === 1;
   }
 
   async setPostLike(newPostLike: PostLikes) {
-    await this.dataSource.query(
-      `
-      INSERT INTO "post_likes"
-      VALUES ($1, $2, $3, $4, $5);
-      `,
-      [
-        newPostLike.id,
-        newPostLike.status,
-        newPostLike.addedAt,
-        newPostLike.user,
-        newPostLike.post,
-      ],
-    );
-    await this.changeCountPostLike(newPostLike.post);
+    await this.dbPostLikesRepository.insert(newPostLike);
+    await this.changeCountPostLike(newPostLike.post.id);
     return newPostLike;
   }
 
   async findLastPostLikes(postId: string) {
-    return this.dataSource.query(
-      `
-      SELECT * FROM "post_likes" 
-      WHERE "postId" = $1 AND "status" = 'Like' AND "userId" NOT IN (
+    const queryBuilder = await this.dbPostLikesRepository
+      .createQueryBuilder('pl')
+      .where(
+        `post = :postId AND status = 'Like' AND user NOT IN (
                 SELECT "id" FROM "users" 
-                WHERE "userIsBanned" = true
-                )      
-      ORDER BY "addedAt" DESC
-      LIMIT 3
-      `,
-      [postId],
-    );
+                WHERE "userIsBanned" = true)`,
+        {
+          postId,
+        },
+      )
+      .orderBy('addedAt', 'DESC')
+      .limit(3);
+    return queryBuilder.getMany();
   }
 
   async findPostLikeByPostAndUserId(postId: string, userId: string) {
-    const result = await this.dataSource.query(
-      `
-      SELECT * FROM "post_likes"
-      WHERE "postId" = $1 AND "userId" = $2
-      `,
-      [postId, userId],
-    );
-    return result[0];
+    const queryBuilder = await this.dbPostLikesRepository
+      .createQueryBuilder('pl')
+      .where({ post: postId, user: userId });
+    return queryBuilder.getOne();
   }
 
   async changeCountPostLike(postId: string) {
     const likeCount = await this.countLikePostStatusInfo(postId, 'Like');
     const dislikeCount = await this.countLikePostStatusInfo(postId, 'Dislike');
-    const result = await this.dataSource.query(
-      `
-      UPDATE "posts"
-      SET "likeCount" = $1, "dislikeCount" = $2
-      WHERE "id" = $3
-      `,
-      [likeCount, dislikeCount, postId],
+    const result = await this.dbPostsRepository.update(
+      { id: postId },
+      {
+        likeCount: likeCount,
+        dislikeCount: dislikeCount,
+      },
     );
-    return result[1] === 1;
+    return result.affected === 1;
   }
 }

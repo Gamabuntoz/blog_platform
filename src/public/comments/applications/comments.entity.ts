@@ -1,6 +1,14 @@
 import { Users } from 'src/super_admin/sa_users/applications/users.entity';
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { Posts } from '../../posts/applications/posts.entity';
+import { CommentLikes } from './comments-likes.entity';
 
 @Entity()
 export class Comments {
@@ -16,8 +24,12 @@ export class Comments {
   likeCount: number;
   @Column()
   dislikeCount: number;
-  @ManyToOne(() => Users, (User) => User.id, { cascade: true })
-  user: string;
-  @ManyToOne(() => Posts, (Post) => Post.id, { cascade: true })
-  post: string;
+  @ManyToOne(() => Users, (u) => u.id, { cascade: true })
+  @JoinColumn({ name: 'userId' })
+  user: Users;
+  @ManyToOne(() => Posts, (p) => p.id, { cascade: true })
+  @JoinColumn({ name: 'postId' })
+  post: Posts;
+  @OneToMany(() => CommentLikes, (cl) => cl.comment, {})
+  commentLikes: CommentLikes[];
 }

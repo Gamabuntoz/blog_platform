@@ -22,7 +22,7 @@ export class DeleteCommentUseCases
         false,
         'Comment not found',
       );
-    if (findComment.userId !== command.userId)
+    if (findComment.user.id !== command.userId)
       return new Result<boolean>(ResultCode.Forbidden, false, 'Access denied');
     await this.commentsRepository.deleteComment(command.id);
     return new Result<boolean>(ResultCode.Success, true, null);

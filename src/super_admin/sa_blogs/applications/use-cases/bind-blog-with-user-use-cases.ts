@@ -20,7 +20,7 @@ export class BindBlogWithUserUseCases
     const blog = await this.saBlogsRepository.findBlogById(command.blogId);
     if (!blog)
       return new Result<boolean>(ResultCode.NotFound, false, 'blog not found');
-    if (blog.ownerId)
+    if (blog.user)
       return new Result<boolean>(
         ResultCode.BadRequest,
         false,
@@ -35,7 +35,7 @@ export class BindBlogWithUserUseCases
       );
     await this.saBlogsRepository.bindBlogWithUser(
       command.blogId,
-      command.userId,
+      user,
       user.login,
     );
     return new Result<boolean>(ResultCode.Success, true, null);
