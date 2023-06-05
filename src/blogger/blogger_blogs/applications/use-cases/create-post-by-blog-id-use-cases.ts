@@ -38,7 +38,6 @@ export class CreatePostWithBlogIdUseCases
         null,
         'Blog not found',
       );
-    console.log(blogById);
     if (blogById.user.id !== command.currentUserId)
       return new Result<PostInfoDTO>(
         ResultCode.Forbidden,

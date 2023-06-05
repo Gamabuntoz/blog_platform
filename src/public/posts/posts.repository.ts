@@ -4,6 +4,8 @@ import { InputPostDTO, QueryPostsDTO } from './applications/posts.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PostLikes } from './applications/posts-likes.entity';
+import { Blogs } from '../../blogger/blogger_blogs/applications/blogger-blogs.entity';
+import { Users } from '../../super_admin/sa_users/applications/users.entity';
 
 @Injectable()
 export class PostsRepository {
@@ -22,10 +24,15 @@ export class PostsRepository {
     const direction = queryData.sortDirection.toUpperCase();
     const queryBuilder = await this.dbPostsRepository
       .createQueryBuilder('p')
-      .where(
-        `blog NOT IN (SELECT "id" FROM "blogs"
-                      WHERE "blogIsBanned" = true)`,
-      )
+      .where((qb) => {
+        const subQuery = qb
+          .subQuery()
+          .select('b.id')
+          .from(Blogs, 'b')
+          .where({ blogIsBanned: true })
+          .getQuery();
+        return 'p.blog NOT IN ' + subQuery;
+      })
       .orderBy(`p.${sortBy}`, (direction as 'ASC') || 'DESC')
       .limit(queryData.pageSize)
       .offset((queryData.pageNumber - 1) * queryData.pageSize);
@@ -50,11 +57,15 @@ export class PostsRepository {
   async totalCountPostsExpectBanned() {
     const queryBuilder = await this.dbPostsRepository
       .createQueryBuilder('p')
-      .where(
-        `blog NOT IN (
-                SELECT "id" FROM "blogs" 
-                WHERE "blogIsBanned" = true)`,
-      );
+      .where((qb) => {
+        const subQuery = qb
+          .subQuery()
+          .select('b.id')
+          .from(Blogs, 'b')
+          .where({ blogIsBanned: true })
+          .getQuery();
+        return 'p.blog NOT IN ' + subQuery;
+      });
     return queryBuilder.getCount();
   }
 
@@ -73,6 +84,7 @@ export class PostsRepository {
   async findPostById(id: string) {
     return this.dbPostsRepository.findOne({
       where: { id: id },
+      relations: ['blog'],
     });
   }
 
@@ -122,15 +134,19 @@ export class PostsRepository {
   async findLastPostLikes(postId: string) {
     const queryBuilder = await this.dbPostLikesRepository
       .createQueryBuilder('pl')
-      .where(
-        `post = :postId AND status = 'Like' AND user NOT IN (
-                SELECT "id" FROM "users" 
-                WHERE "userIsBanned" = true)`,
-        {
-          postId,
-        },
-      )
-      .orderBy('addedAt', 'DESC')
+      .where((qb) => {
+        const subQuery = qb
+          .subQuery()
+          .select('u.id')
+          .from(Users, 'u')
+          .where({ userIsBanned: true })
+          .getQuery();
+        return (
+          `pl.post = :postId AND status = 'Like' AND pl.user NOT IN ` + subQuery
+        );
+      })
+      .setParameter('postId', postId)
+      .orderBy('pl.addedAt', 'DESC')
       .limit(3);
     return queryBuilder.getMany();
   }

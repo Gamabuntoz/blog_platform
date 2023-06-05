@@ -10,6 +10,7 @@ import { BloggerBlogsRepository } from '../../blogger/blogger_blogs/blogger-blog
 import { AuthRepository } from '../auth/auth.repository';
 import { Blogs } from '../../blogger/blogger_blogs/applications/blogger-blogs.entity';
 import { PostLikes } from './applications/posts-likes.entity';
+import { Posts } from './applications/posts.entity';
 
 @Injectable()
 export class PostsService {
@@ -170,8 +171,8 @@ export class PostsService {
   }
 
   async createPostViewInfo(
-    post,
-    lastPostLikes,
+    post: Posts,
+    lastPostLikes: PostLikes[],
     likeStatusCurrentUser?: PostLikes,
     countBannedLikesOwner?,
     countBannedDislikesOwner?,
@@ -181,7 +182,7 @@ export class PostsService {
       post.title,
       post.shortDescription,
       post.content,
-      post.blogId,
+      post.blog.id,
       post.blogName,
       post.createdAt,
       {
@@ -194,10 +195,10 @@ export class PostsService {
         myStatus: likeStatusCurrentUser ? likeStatusCurrentUser.status : 'None',
         newestLikes: await Promise.all(
           lastPostLikes.map(async (l) => {
-            const user = await this.authRepository.findUserById(l.userId);
+            const user = await this.authRepository.findUserById(l.user.id);
             return {
               addedAt: l.addedAt,
-              userId: l.userId,
+              userId: l.user.id,
               login: user?.login,
             };
           }),

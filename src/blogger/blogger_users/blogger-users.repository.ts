@@ -41,8 +41,9 @@ export class BloggerUsersRepository {
         .where({ blog: filter.blogId, isBanned: true });
       if (filter.searchLoginTerm) {
         queryBuilder.where(
-          "blog = :blogId AND isBanned = true AND userLogin ILIKE '%' || :loginTerm || '%'",
+          "bub.blog = :blogId AND isBanned = :banned AND userLogin ILIKE '%' || :loginTerm || '%'",
           {
+            banned: true,
             loginTerm: filter.searchLoginTerm,
             blogId: filter.blogId,
           },
@@ -82,8 +83,9 @@ export class BloggerUsersRepository {
         .where({ blog: filter.blogId, isBanned: true });
       if (filter.searchLoginTerm) {
         queryBuilder.where(
-          "blog = :blogId AND isBanned = true AND userLogin ILIKE '%' || :loginTerm || '%'",
+          "bub.blog = :blogId AND isBanned = :banned AND userLogin ILIKE '%' || :loginTerm || '%'",
           {
+            banned: true,
             loginTerm: filter.searchLoginTerm,
             blogId: filter.blogId,
           },

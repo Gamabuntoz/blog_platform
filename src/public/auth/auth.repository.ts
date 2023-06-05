@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import add from 'date-fns/add';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { PostLikes } from '../posts/applications/posts-likes.entity';
 
 @Injectable()
 export class AuthRepository {
@@ -24,16 +25,15 @@ export class AuthRepository {
   async countBannedUsersPostLikeOwner(postId: string, status: string) {
     const queryBuilder = await this.dbUsersRepository
       .createQueryBuilder('u')
-      .where(
-        `u.id IN (
-                SELECT "userId" 
-                FROM "post_likes" 
-                WHERE "postId" = :postId 
-                AND "status" = :status
-                )
-        AND u.userIsBanned = ture`,
-        { postId: postId, status: status },
-      );
+      .where((qb) => {
+        const subQuery = qb
+          .subQuery()
+          .select('pl.userId')
+          .from(PostLikes, 'pl')
+          .where({ post: postId, status: status })
+          .getQuery();
+        return 'u.userIsBanned = true AND u.id IN ' + subQuery;
+      });
     return queryBuilder.getCount();
   }
 

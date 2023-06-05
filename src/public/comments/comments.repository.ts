@@ -17,7 +17,10 @@ export class CommentsRepository {
   ) {}
 
   async findCommentById(id: string) {
-    return this.dbCommentsRepository.findOne({ where: { id } });
+    return this.dbCommentsRepository.findOne({
+      where: { id },
+      relations: ['user'],
+    });
   }
 
   async createComment(newComment: Comments) {
@@ -109,7 +112,7 @@ export class CommentsRepository {
     const queryBuilder = await this.dbCommentsRepository
       .createQueryBuilder('c')
       .where(
-        `post IN (
+        `c.postId IN (
                 SELECT "id" FROM "posts" 
                 WHERE "blog" IN (
                     SELECT "id"     
@@ -141,7 +144,7 @@ export class CommentsRepository {
     const queryBuilder = await this.dbCommentsRepository
       .createQueryBuilder('c')
       .where(
-        `post IN (
+        `c.postId IN (
                 SELECT "id" FROM "posts" 
                 WHERE "blog" IN (
                     SELECT "id"     
