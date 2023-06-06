@@ -19,7 +19,11 @@ export class PostLikes {
   @ManyToOne(() => Users, (u) => u.id, { cascade: true })
   @JoinColumn({ name: 'userId' })
   user: Users;
+  @Column()
+  userId: string;
   @ManyToOne(() => Posts, (p) => p.id, { cascade: true })
   @JoinColumn({ name: 'postId' })
   post: Posts;
+  @Column()
+  postId: string;
 }

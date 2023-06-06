@@ -18,7 +18,7 @@ export class DeleteBlogUseCases implements ICommandHandler<DeleteBlogCommand> {
         false,
         'Blog is not found',
       );
-    if (blog.user.id !== command.currentUserId)
+    if (blog.userId !== command.currentUserId)
       return new Result<boolean>(ResultCode.Forbidden, false, 'Access denied');
     await this.bloggerBlogsRepository.deleteBlog(command.id);
     return new Result<boolean>(ResultCode.Success, true, null);

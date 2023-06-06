@@ -73,6 +73,8 @@ export class UpdateCommentLikeStatusUseCases
       id: uuidv4(),
       user: user,
       comment: comment,
+      userId: user.id,
+      commentId: comment.id,
       status: likeStatus,
       addedAt: new Date().toISOString(),
     };

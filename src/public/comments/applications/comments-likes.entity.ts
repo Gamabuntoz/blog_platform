@@ -19,7 +19,11 @@ export class CommentLikes {
   @ManyToOne(() => Users, (u) => u.id, { cascade: true })
   @JoinColumn({ name: 'userId' })
   user: Users;
+  @Column()
+  userId: string;
   @ManyToOne(() => Comments, (c) => c.id, { cascade: true })
   @JoinColumn({ name: 'commentId' })
   comment: Comments;
+  @Column()
+  commentId: string;
 }

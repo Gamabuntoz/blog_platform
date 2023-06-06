@@ -44,6 +44,7 @@ export class LoginUserUseCases implements ICommandHandler<LoginUserCommand> {
       issueAt: new Date().getTime(),
       expiresAt: new Date().getTime() + jwtConstants.expirationRefreshToken,
       user: user,
+      userId: user.id,
     };
     await this.devicesRepository.insertDeviceInfo(device);
     const newPairTokens = await this.authService.createNewPairTokens(

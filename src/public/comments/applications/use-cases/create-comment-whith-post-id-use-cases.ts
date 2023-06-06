@@ -32,8 +32,8 @@ export class CreateCommentWithPostIdUseCases
     command: CreateCommentWithPostIdCommand,
   ): Promise<Result<CommentInfoDTO>> {
     const user: Users = await this.authRepository.findUserById(command.userId);
-    const postById = await this.postsRepository.findPostById(command.postId);
-    if (!postById)
+    const post = await this.postsRepository.findPostById(command.postId);
+    if (!post)
       return new Result<CommentInfoDTO>(
         ResultCode.NotFound,
         null,
@@ -42,7 +42,7 @@ export class CreateCommentWithPostIdUseCases
     const checkUserForBanForBlog =
       await this.bloggerUsersRepository.checkUserForBan(
         command.userId,
-        postById.blog.id,
+        post.blog.id,
       );
     if (checkUserForBanForBlog)
       return new Result<CommentInfoDTO>(
@@ -52,9 +52,11 @@ export class CreateCommentWithPostIdUseCases
       );
     const newComment: Comments = {
       id: uuidv4(),
-      post: postById,
+      post: post,
       content: command.content,
       user: user,
+      postId: post.id,
+      userId: user.id,
       userLogin: user.login,
       createdAt: new Date().toISOString(),
       likeCount: 0,

@@ -22,4 +22,6 @@ export class Devices {
   @ManyToOne(() => Users, (u) => u.id, { cascade: true })
   @JoinColumn({ name: 'userId' })
   user: Users;
+  @Column()
+  userId: string;
 }

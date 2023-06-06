@@ -29,16 +29,14 @@ export class CreatePostWithBlogIdUseCases
   async execute(
     command: CreatePostWithBlogIdCommand,
   ): Promise<Result<PostInfoDTO>> {
-    const blogById = await this.bloggerBlogsRepository.findBlogById(
-      command.blogId,
-    );
-    if (!blogById)
+    const blog = await this.bloggerBlogsRepository.findBlogById(command.blogId);
+    if (!blog)
       return new Result<PostInfoDTO>(
         ResultCode.NotFound,
         null,
         'Blog not found',
       );
-    if (blogById.user.id !== command.currentUserId)
+    if (blog.userId !== command.currentUserId)
       return new Result<PostInfoDTO>(
         ResultCode.Forbidden,
         null,
@@ -49,8 +47,9 @@ export class CreatePostWithBlogIdUseCases
       title: command.inputData.title,
       shortDescription: command.inputData.shortDescription,
       content: command.inputData.content,
-      blog: blogById,
-      blogName: blogById.name,
+      blog: blog,
+      blogName: blog.name,
+      blogId: blog.id,
       createdAt: new Date().toISOString(),
       likeCount: 0,
       dislikeCount: 0,
@@ -63,7 +62,7 @@ export class CreatePostWithBlogIdUseCases
       newPost.title,
       newPost.shortDescription,
       newPost.content,
-      newPost.blog.id,
+      newPost.blogId,
       newPost.blogName,
       newPost.createdAt,
       {

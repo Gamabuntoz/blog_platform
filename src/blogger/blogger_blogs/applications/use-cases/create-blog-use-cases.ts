@@ -32,6 +32,7 @@ export class CreateBlogUseCases implements ICommandHandler<CreateBlogCommand> {
       websiteUrl: command.inputData.websiteUrl,
       isMembership: false,
       user: user,
+      userId: user.id,
       ownerLogin: user.login,
       blogIsBanned: false,
       blogBanDate: null,

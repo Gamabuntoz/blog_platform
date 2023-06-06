@@ -19,7 +19,7 @@ export class BloggerUsersRepository {
     inputData: InputBanUserForBlogDTO,
   ): Promise<boolean> {
     const result = await this.dbBanUserBlogRepository.update(
-      { user: userId, blog: inputData.blogId },
+      { userId: userId, blogId: inputData.blogId },
       {
         isBanned: inputData.isBanned,
         banReason: inputData.isBanned ? inputData.banReason : null,
@@ -61,7 +61,7 @@ export class BloggerUsersRepository {
     blogId: string,
   ): Promise<BanUserForBlog> {
     return this.dbBanUserBlogRepository.findOne({
-      where: { user: userId, blog: blogId },
+      where: { userId: userId, blogId: blogId },
     });
   }
 

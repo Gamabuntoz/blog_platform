@@ -27,8 +27,8 @@ export class PostsService {
     queryData: QueryPostsDTO,
     userId?: string,
   ): Promise<Result<Paginated<CommentInfoDTO[]>>> {
-    const postById = await this.postsRepository.findPostById(id);
-    if (!postById)
+    const post = await this.postsRepository.findPostById(id);
+    if (!post)
       return new Result<Paginated<CommentInfoDTO[]>>(
         ResultCode.NotFound,
         null,
@@ -126,15 +126,15 @@ export class PostsService {
     postId: string,
     userId?: string,
   ): Promise<Result<PostInfoDTO>> {
-    const postById = await this.postsRepository.findPostById(postId);
-    if (!postById)
+    const post = await this.postsRepository.findPostById(postId);
+    if (!post)
       return new Result<PostInfoDTO>(
         ResultCode.NotFound,
         null,
         'post not found',
       );
     const checkBlog: Blogs = await this.bloggerBlogsRepository.findBlogById(
-      postById.blog.id,
+      post.blogId,
     );
     if (checkBlog.blogIsBanned)
       return new Result<PostInfoDTO>(
@@ -157,7 +157,7 @@ export class PostsService {
     }
     const lastPostLikes = await this.postsRepository.findLastPostLikes(postId);
     const postView = await this.createPostViewInfo(
-      postById,
+      post,
       lastPostLikes,
       likeStatusCurrentUser,
       countBannedLikesOwner,
@@ -182,7 +182,7 @@ export class PostsService {
       post.title,
       post.shortDescription,
       post.content,
-      post.blog.id,
+      post.blogId,
       post.blogName,
       post.createdAt,
       {
@@ -195,10 +195,10 @@ export class PostsService {
         myStatus: likeStatusCurrentUser ? likeStatusCurrentUser.status : 'None',
         newestLikes: await Promise.all(
           lastPostLikes.map(async (l) => {
-            const user = await this.authRepository.findUserById(l.user.id);
+            const user = await this.authRepository.findUserById(l.userId);
             return {
               addedAt: l.addedAt,
-              userId: l.user.id,
+              userId: l.userId,
               login: user?.login,
             };
           }),

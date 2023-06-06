@@ -25,7 +25,7 @@ export class CommentsService {
         null,
         'Comment not found',
       );
-    const user: Users = await this.authRepository.findUserById(comment.user.id);
+    const user: Users = await this.authRepository.findUserById(comment.userId);
     if (user.userIsBanned)
       return new Result<CommentInfoDTO>(
         ResultCode.NotFound,
@@ -71,7 +71,7 @@ export class CommentsService {
       comment.id,
       comment.content,
       {
-        userId: comment.user.id,
+        userId: comment.userId,
         userLogin: comment.userLogin,
       },
       comment.createdAt,

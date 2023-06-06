@@ -27,7 +27,7 @@ export class BloggerUsersService {
         null,
         'blog not found',
       );
-    if (blog.user.id !== currentUserId)
+    if (blog.userId !== currentUserId)
       return new Result<Paginated<BannedUsersForBlogInfoDTO[]>>(
         ResultCode.Forbidden,
         null,
@@ -52,7 +52,7 @@ export class BloggerUsersService {
       totalCount,
       items: allBannedUsersForBlog.map(
         (b) =>
-          new BannedUsersForBlogInfoDTO(b.user, b.userLogin, {
+          new BannedUsersForBlogInfoDTO(b.userId, b.userLogin, {
             isBanned: b.isBanned,
             banDate: b.banDate,
             banReason: b.banReason,

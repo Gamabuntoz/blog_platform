@@ -26,6 +26,8 @@ export class Posts {
   @Column()
   blogName: string;
   @Column()
+  blogId: string;
+  @Column()
   createdAt: string;
   @Column()
   likeCount: number;

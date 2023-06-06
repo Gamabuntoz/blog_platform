@@ -29,6 +29,8 @@ export class Blogs {
   @JoinColumn({ name: 'userId' })
   user: Users;
   @Column()
+  userId: string;
+  @Column()
   ownerLogin: string;
   @Column()
   blogIsBanned: boolean;

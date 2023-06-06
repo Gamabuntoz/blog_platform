@@ -45,13 +45,13 @@ export class BloggerBlogsService {
               c.id,
               currentUserId,
             );
-          const post = await this.postsRepository.findPostById(c.post.id);
+          const post = await this.postsRepository.findPostById(c.postId);
           return new BloggerCommentInfoDTO(
             c.id,
             c.content,
             c.createdAt,
             {
-              userId: c.user.id,
+              userId: c.userId,
               userLogin: c.userLogin,
             },
             {
@@ -64,7 +64,7 @@ export class BloggerBlogsService {
             {
               id: post.id,
               title: post.title,
-              blogId: post.blog.id,
+              blogId: post.blogId,
               blogName: post.blogName,
             },
           );

@@ -32,11 +32,12 @@ export class BanUserForBlogUseCases
     );
     if (!blog)
       return new Result<boolean>(ResultCode.NotFound, false, 'Blog not found');
-    if (blog.user.id !== command.currentUserId)
+    if (blog.userId !== command.currentUserId)
       return new Result<boolean>(ResultCode.Forbidden, false, 'Access denied');
     const bannedUser: Users = await this.authRepository.findUserById(
       command.userId,
     );
+    const user = await this.authRepository.findUserById(command.userId);
     if (!bannedUser)
       return new Result<boolean>(ResultCode.NotFound, false, 'User not found');
     const checkUserForBan = await this.bloggerUsersRepository.checkUserForBan(
@@ -52,14 +53,16 @@ export class BanUserForBlogUseCases
     }
     const newBannedStatus: BanUserForBlog = {
       id: uuidv4(),
-      blog: command.inputData.blogId,
+      blog: blog,
+      blogId: blog.id,
       isBanned: command.inputData.isBanned,
       createdAt: new Date().toISOString(),
       banDate: command.inputData.isBanned ? new Date().toISOString() : null,
       banReason: command.inputData.banReason
         ? command.inputData.banReason
         : null,
-      user: command.userId,
+      user: user,
+      userId: user.id,
       userLogin: bannedUser.login,
     };
     await this.bloggerUsersRepository.createBannedUserStatusForBlog(

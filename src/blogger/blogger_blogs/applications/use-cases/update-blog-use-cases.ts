@@ -20,7 +20,7 @@ export class UpdateBlogUseCases implements ICommandHandler<UpdateBlogCommand> {
     if (!blog)
       return new Result<boolean>(ResultCode.NotFound, false, 'Blog not found');
 
-    if (blog.user.id !== command.currentUserId)
+    if (blog.userId !== command.currentUserId)
       return new Result<boolean>(ResultCode.Forbidden, false, 'Access denied');
     await this.bloggerBlogsRepository.updateBlog(
       command.id,

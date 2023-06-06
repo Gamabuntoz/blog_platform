@@ -15,7 +15,9 @@ export class BanUserForBlog {
   id: string;
   @OneToOne(() => Blogs, (b) => b.id, { cascade: true })
   @JoinColumn({ name: 'blogId' })
-  blog: string;
+  blog: Blogs;
+  @Column()
+  blogId: string;
   @Column()
   isBanned: boolean;
   @Column({ nullable: true })
@@ -26,7 +28,9 @@ export class BanUserForBlog {
   banReason: string | null;
   @OneToOne(() => Users, (u) => u.id, { cascade: true })
   @JoinColumn({ name: 'userId' })
-  user: string;
+  user: Users;
+  @Column()
+  userId: string;
   @Column()
   userLogin: string;
 }

@@ -65,6 +65,8 @@ export class UpdatePostLikeStatusUseCases
       id: uuidv4(),
       user: user,
       post: post,
+      userId: user.id,
+      postId: post.id,
       status: likeStatus,
       addedAt: new Date().toISOString(),
     };

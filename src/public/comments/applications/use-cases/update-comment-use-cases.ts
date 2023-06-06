@@ -18,16 +18,14 @@ export class UpdateCommentUseCases
   constructor(private commentsRepository: CommentsRepository) {}
 
   async execute(command: UpdateCommentCommand): Promise<Result<boolean>> {
-    const findComment = await this.commentsRepository.findCommentById(
-      command.id,
-    );
-    if (!findComment)
+    const comment = await this.commentsRepository.findCommentById(command.id);
+    if (!comment)
       return new Result<boolean>(
         ResultCode.NotFound,
         false,
         'Comment not found',
       );
-    if (findComment.user.id !== command.userId)
+    if (comment.userId !== command.userId)
       return new Result<boolean>(ResultCode.Forbidden, false, 'Access denied');
     await this.commentsRepository.updateComment(command.id, command.inputData);
     return new Result<boolean>(ResultCode.Success, true, null);
