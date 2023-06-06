@@ -114,10 +114,10 @@ export class CommentsRepository {
       .where(
         `c.postId IN (
                 SELECT "id" FROM "posts" 
-                WHERE "blog" IN (
+                WHERE "blogId" IN (
                     SELECT "id"     
                     FROM "blogs" 
-                    WHERE "user" = :ownerId))`,
+                    WHERE "userId" = :ownerId))`,
         { ownerId },
       )
       .orderBy(`c.${sortBy}`, (direction as 'ASC') || 'DESC')
@@ -146,10 +146,10 @@ export class CommentsRepository {
       .where(
         `c.postId IN (
                 SELECT "id" FROM "posts" 
-                WHERE "blog" IN (
-                    SELECT "id"     
+                WHERE "blogId" IN (
+                    SELECT "id"
                     FROM "blogs" 
-                    WHERE "user" = :ownerId))`,
+                    WHERE "userId" = :ownerId))`,
         { ownerId },
       );
     return queryBuilder.getCount();

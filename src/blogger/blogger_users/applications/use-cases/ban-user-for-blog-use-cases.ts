@@ -27,47 +27,61 @@ export class BanUserForBlogUseCases
   ) {}
 
   async execute(command: BanUserForBlogCommand): Promise<Result<boolean>> {
-    const blog = await this.bloggerBlogsRepository.findBlogById(
-      command.inputData.blogId,
-    );
-    if (!blog)
-      return new Result<boolean>(ResultCode.NotFound, false, 'Blog not found');
-    if (blog.userId !== command.currentUserId)
-      return new Result<boolean>(ResultCode.Forbidden, false, 'Access denied');
-    const bannedUser: Users = await this.authRepository.findUserById(
-      command.userId,
-    );
-    const user = await this.authRepository.findUserById(command.userId);
-    if (!bannedUser)
-      return new Result<boolean>(ResultCode.NotFound, false, 'User not found');
-    const checkUserForBan = await this.bloggerUsersRepository.checkUserForBan(
-      command.userId,
-      command.inputData.blogId,
-    );
-    if (checkUserForBan) {
-      await this.bloggerUsersRepository.updateBannedUserStatusForBlog(
+    try {
+      const blog = await this.bloggerBlogsRepository.findBlogById(
+        command.inputData.blogId,
+      );
+      if (!blog)
+        return new Result<boolean>(
+          ResultCode.NotFound,
+          false,
+          'Blog not found',
+        );
+      if (blog.userId !== command.currentUserId)
+        return new Result<boolean>(
+          ResultCode.Forbidden,
+          false,
+          'Access denied',
+        );
+      const user = await this.authRepository.findUserById(command.userId);
+      if (!user)
+        return new Result<boolean>(
+          ResultCode.NotFound,
+          false,
+          'User not found',
+        );
+      const checkUserForBan = await this.bloggerUsersRepository.checkUserForBan(
         command.userId,
-        command.inputData,
+        command.inputData.blogId,
+      );
+      if (checkUserForBan) {
+        await this.bloggerUsersRepository.updateBannedUserStatusForBlog(
+          command.userId,
+          command.inputData,
+        );
+        return new Result<boolean>(ResultCode.Success, true, null);
+      }
+      const newBannedStatus: BanUserForBlog = {
+        id: uuidv4(),
+        blog: blog,
+        blogId: blog.id,
+        isBanned: command.inputData.isBanned,
+        createdAt: new Date().toISOString(),
+        banDate: command.inputData.isBanned ? new Date().toISOString() : null,
+        banReason: command.inputData.banReason
+          ? command.inputData.banReason
+          : null,
+        user: user,
+        userId: user.id,
+        userLogin: user.login,
+      };
+      await this.bloggerUsersRepository.createBannedUserStatusForBlog(
+        newBannedStatus,
       );
       return new Result<boolean>(ResultCode.Success, true, null);
+    } catch (e) {
+      console.log(e);
+      console.log('catch in the BanUserForBlogCommand');
     }
-    const newBannedStatus: BanUserForBlog = {
-      id: uuidv4(),
-      blog: blog,
-      blogId: blog.id,
-      isBanned: command.inputData.isBanned,
-      createdAt: new Date().toISOString(),
-      banDate: command.inputData.isBanned ? new Date().toISOString() : null,
-      banReason: command.inputData.banReason
-        ? command.inputData.banReason
-        : null,
-      user: user,
-      userId: user.id,
-      userLogin: bannedUser.login,
-    };
-    await this.bloggerUsersRepository.createBannedUserStatusForBlog(
-      newBannedStatus,
-    );
-    return new Result<boolean>(ResultCode.Success, true, null);
   }
 }

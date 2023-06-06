@@ -65,7 +65,6 @@ export class BloggerBlogsRepository {
   async findBlogById(id: string) {
     return this.dbBlogsRepository.findOne({
       where: { id: id },
-      relations: ['user'],
     });
   }
 
