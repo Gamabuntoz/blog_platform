@@ -5,6 +5,7 @@ import add from 'date-fns/add';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PostLikes } from '../posts/applications/posts-likes.entity';
+import { CommentLikes } from '../comments/applications/comments-likes.entity';
 
 @Injectable()
 export class AuthRepository {
@@ -30,7 +31,7 @@ export class AuthRepository {
           .subQuery()
           .select('pl.userId')
           .from(PostLikes, 'pl')
-          .where({ post: postId, status: status })
+          .where({ postId: postId, status: status })
           .getQuery();
         return 'u.userIsBanned = true AND u.id IN ' + subQuery;
       });
@@ -40,16 +41,15 @@ export class AuthRepository {
   async countBannedUsersCommentLikeOwner(commentId: string, status: string) {
     const queryBuilder = await this.dbUsersRepository
       .createQueryBuilder('u')
-      .where(
-        `u.id IN (
-                SELECT "userId" 
-                FROM "comment_likes" 
-                WHERE "commentId" = :commentId 
-                AND "status" = :status
-                )
-        AND u.userIsBanned = ture`,
-        { commentId: commentId, status: status },
-      );
+      .where((qb) => {
+        const subQuery = qb
+          .subQuery()
+          .select('cl.userId')
+          .from(CommentLikes, 'cl')
+          .where({ commentId: commentId, status: status })
+          .getQuery();
+        return 'u.userIsBanned = true AND u.id IN ' + subQuery;
+      });
     return queryBuilder.getCount();
   }
 

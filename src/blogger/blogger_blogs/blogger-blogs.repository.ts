@@ -20,10 +20,10 @@ export class BloggerBlogsRepository {
     try {
       const queryBuilder = await this.dbBlogsRepository
         .createQueryBuilder('b')
-        .where({ user: filter.userId });
+        .where({ userId: filter.userId });
       if (filter.searchNameTerm) {
         queryBuilder.where(
-          "b.user = :id AND b.name ILIKE '%' || :nameTerm || '%'",
+          "b.userId = :id AND b.name ILIKE '%' || :nameTerm || '%'",
           {
             nameTerm: filter.searchNameTerm,
             id: filter.userId,
@@ -45,7 +45,7 @@ export class BloggerBlogsRepository {
     try {
       const queryBuilder = await this.dbBlogsRepository
         .createQueryBuilder('b')
-        .where({ user: filter.userId });
+        .where({ userId: filter.userId });
       if (filter.searchNameTerm) {
         queryBuilder.where(
           "b.user = :id AND b.name ILIKE '%' || :nameTerm || '%'",

@@ -13,14 +13,14 @@ export class DevicesRepository {
   async findAllUserDevices(currentUserId: string) {
     const queryBuilder = await this.dbDevicesRepository
       .createQueryBuilder('d')
-      .where({ user: currentUserId });
+      .where({ userId: currentUserId });
     return queryBuilder.getMany();
   }
 
   async findDeviceByDateAndUserId(issueAt: number, userId: string) {
     const queryBuilder = await this.dbDevicesRepository
       .createQueryBuilder('d')
-      .where({ issueAt: issueAt, user: userId });
+      .where({ issueAt: issueAt, userId: userId });
     return queryBuilder.getOne();
   }
 
@@ -45,7 +45,7 @@ export class DevicesRepository {
       .createQueryBuilder('d')
       .update()
       .set({ issueAt: newIssueAt })
-      .where({ issueAt: oldIssueAt, user: userId });
+      .where({ issueAt: oldIssueAt, userId: userId });
     return queryBuilder.execute();
   }
 
@@ -64,7 +64,7 @@ export class DevicesRepository {
     const queryBuilder = await this.dbDevicesRepository
       .createQueryBuilder('d')
       .delete()
-      .where({ issueAt: issueAt, user: userId });
+      .where({ issueAt: issueAt, userId: userId });
     return queryBuilder.execute();
   }
 

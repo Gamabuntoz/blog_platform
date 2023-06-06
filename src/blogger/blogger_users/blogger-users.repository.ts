@@ -38,10 +38,10 @@ export class BloggerUsersRepository {
     try {
       const queryBuilder = await this.dbBanUserBlogRepository
         .createQueryBuilder('bub')
-        .where({ blog: filter.blogId, isBanned: true });
+        .where({ blogId: filter.blogId, isBanned: true });
       if (filter.searchLoginTerm) {
         queryBuilder.where(
-          "bub.blog = :blogId AND isBanned = :banned AND userLogin ILIKE '%' || :loginTerm || '%'",
+          "bub.blogId = :blogId AND isBanned = :banned AND userLogin ILIKE '%' || :loginTerm || '%'",
           {
             banned: true,
             loginTerm: filter.searchLoginTerm,
@@ -80,7 +80,7 @@ export class BloggerUsersRepository {
     try {
       const queryBuilder = await this.dbBanUserBlogRepository
         .createQueryBuilder('bub')
-        .where({ blog: filter.blogId, isBanned: true });
+        .where({ blogId: filter.blogId, isBanned: true });
       if (filter.searchLoginTerm) {
         queryBuilder.where(
           "bub.blog = :blogId AND isBanned = :banned AND userLogin ILIKE '%' || :loginTerm || '%'",

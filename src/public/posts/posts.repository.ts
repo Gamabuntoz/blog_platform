@@ -31,7 +31,7 @@ export class PostsRepository {
           .from(Blogs, 'b')
           .where({ blogIsBanned: true })
           .getQuery();
-        return 'p.blog NOT IN ' + subQuery;
+        return 'p.blogId NOT IN ' + subQuery;
       })
       .orderBy(`p.${sortBy}`, (direction as 'ASC') || 'DESC')
       .limit(queryData.pageSize)
@@ -47,7 +47,7 @@ export class PostsRepository {
     const direction = queryData.sortDirection.toUpperCase();
     const queryBuilder = await this.dbPostsRepository
       .createQueryBuilder('p')
-      .where({ blog: id })
+      .where({ blogId: id })
       .orderBy(`p.${sortBy}`, (direction as 'ASC') || 'DESC')
       .limit(queryData.pageSize)
       .offset((queryData.pageNumber - 1) * queryData.pageSize);
@@ -64,7 +64,7 @@ export class PostsRepository {
           .from(Blogs, 'b')
           .where({ blogIsBanned: true })
           .getQuery();
-        return 'p.blog NOT IN ' + subQuery;
+        return 'p.blogId NOT IN ' + subQuery;
       });
     return queryBuilder.getCount();
   }
@@ -72,7 +72,7 @@ export class PostsRepository {
   async totalCountPostsByBlogId(blogId: string) {
     const queryBuilder = await this.dbPostsRepository
       .createQueryBuilder('p')
-      .where({ blog: blogId });
+      .where({ blogId: blogId });
     return queryBuilder.getCount();
   }
 
@@ -108,7 +108,7 @@ export class PostsRepository {
   async countLikePostStatusInfo(postId: string, status: string) {
     const queryBuilder = await this.dbPostLikesRepository
       .createQueryBuilder('pl')
-      .where({ post: postId, status: status });
+      .where({ postId: postId, status: status });
     return queryBuilder.getCount();
   }
 
@@ -120,7 +120,7 @@ export class PostsRepository {
     const queryBuilder = await this.dbPostLikesRepository
       .createQueryBuilder('pl')
       .update({ status: likeStatus })
-      .where({ post: postId, user: userId });
+      .where({ postId: postId, userId: userId });
     const result = await queryBuilder.execute();
     return result.affected === 1;
   }
@@ -142,7 +142,8 @@ export class PostsRepository {
           .where({ userIsBanned: true })
           .getQuery();
         return (
-          `pl.post = :postId AND status = 'Like' AND pl.user NOT IN ` + subQuery
+          `pl.postId = :postId AND status = 'Like' AND pl.userId NOT IN ` +
+          subQuery
         );
       })
       .setParameter('postId', postId)
@@ -154,7 +155,7 @@ export class PostsRepository {
   async findPostLikeByPostAndUserId(postId: string, userId: string) {
     const queryBuilder = await this.dbPostLikesRepository
       .createQueryBuilder('pl')
-      .where({ post: postId, user: userId });
+      .where({ postId: postId, userId: userId });
     return queryBuilder.getOne();
   }
 

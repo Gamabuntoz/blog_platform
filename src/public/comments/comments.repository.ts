@@ -36,7 +36,7 @@ export class CommentsRepository {
     const queryBuilder = await this.dbCommentLikesRepository
       .createQueryBuilder('cl')
       .update({ status: likeStatus })
-      .where({ comment: commentId, user: userId });
+      .where({ commentId: commentId, userId: userId });
     const result = await queryBuilder.execute();
     return result.affected === 1;
   }
@@ -50,7 +50,7 @@ export class CommentsRepository {
   async countLikeCommentStatusInfo(commentId: string, status: string) {
     const queryBuilder = await this.dbCommentLikesRepository
       .createQueryBuilder('cl')
-      .where({ comment: commentId, status: status });
+      .where({ commentId: commentId, status: status });
     return queryBuilder.getCount();
   }
 
@@ -93,7 +93,7 @@ export class CommentsRepository {
     const direction = queryData.sortDirection.toUpperCase();
     const queryBuilder = await this.dbCommentsRepository
       .createQueryBuilder('c')
-      .where({ post: id })
+      .where({ postId: id })
       .orderBy(`c.${sortBy}`, (direction as 'ASC') || 'DESC')
       .limit(queryData.pageSize)
       .offset((queryData.pageNumber - 1) * queryData.pageSize);
@@ -129,14 +129,14 @@ export class CommentsRepository {
   async findCommentLikeByCommentAndUserId(commentId: string, userId: string) {
     const queryBuilder = await this.dbCommentLikesRepository
       .createQueryBuilder('cl')
-      .where({ comment: commentId, user: userId });
+      .where({ commentId: commentId, userId: userId });
     return queryBuilder.getOne();
   }
 
   async totalCountComments(id: string) {
     const queryBuilder = await this.dbCommentsRepository
       .createQueryBuilder('c')
-      .where({ post: id });
+      .where({ postId: id });
     return queryBuilder.getCount();
   }
 
