@@ -34,11 +34,11 @@ export class BloggerUsersService {
         'access denied',
       );
     const filter: any = { blogId: blogId, isBanned: true };
-    filter['searchLoginTerm'] = queryData.searchLoginTerm
-      ? queryData.searchLoginTerm
-      : null;
     const totalCount =
-      await this.bloggerUsersRepository.totalCountBannedUsersForBlog(filter);
+      await this.bloggerUsersRepository.totalCountBannedUsersForBlog(
+        filter,
+        queryData,
+      );
     const allBannedUsersForBlog =
       await this.bloggerUsersRepository.findAllBannedUsersForBlog(
         filter,

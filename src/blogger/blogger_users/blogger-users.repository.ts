@@ -39,17 +39,20 @@ export class BloggerUsersRepository {
     }
   }
 
-  async totalCountBannedUsersForBlog(filter: any) {
+  async totalCountBannedUsersForBlog(
+    filter: any,
+    queryData: QueryBannedUsersForBlogDTO,
+  ) {
     try {
       const queryBuilder = await this.dbBanUserBlogRepository
         .createQueryBuilder('bub')
         .where({ blogId: filter.blogId, isBanned: true });
-      if (filter.searchLoginTerm) {
+      if (queryData.searchLoginTerm) {
         queryBuilder.where(
           "bub.blogId = :blogId AND isBanned = :banned AND userLogin ILIKE '%' || :loginTerm || '%'",
           {
             banned: true,
-            loginTerm: filter.searchLoginTerm,
+            loginTerm: queryData.searchLoginTerm,
             blogId: filter.blogId,
           },
         );
@@ -86,12 +89,12 @@ export class BloggerUsersRepository {
       const queryBuilder = await this.dbBanUserBlogRepository
         .createQueryBuilder('bub')
         .where({ blogId: filter.blogId, isBanned: true });
-      if (filter.searchLoginTerm) {
+      if (queryData.searchLoginTerm) {
         queryBuilder.where(
           "bub.blog = :blogId AND isBanned = :banned AND userLogin ILIKE '%' || :loginTerm || '%'",
           {
             banned: true,
-            loginTerm: filter.searchLoginTerm,
+            loginTerm: queryData.searchLoginTerm,
             blogId: filter.blogId,
           },
         );
