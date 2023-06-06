@@ -30,8 +30,13 @@ export class BloggerUsersRepository {
   }
 
   async createBannedUserStatusForBlog(newBannedUserStatus: BanUserForBlog) {
-    await this.dbBanUserBlogRepository.insert(newBannedUserStatus);
-    return newBannedUserStatus;
+    try {
+      await this.dbBanUserBlogRepository.insert(newBannedUserStatus);
+      return newBannedUserStatus;
+    } catch (e) {
+      console.log(e.message);
+      console.log('catch in the createBannedUserStatusForBlog');
+    }
   }
 
   async totalCountBannedUsersForBlog(filter: any) {

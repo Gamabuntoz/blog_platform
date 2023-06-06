@@ -6,7 +6,6 @@ import { BloggerUsersRepository } from '../../blogger-users.repository';
 import { v4 as uuidv4 } from 'uuid';
 import { BanUserForBlog } from '../banned-users-for-blogs.entity';
 import { AuthRepository } from '../../../../public/auth/auth.repository';
-import { Users } from '../../../../super_admin/sa_users/applications/users.entity';
 
 export class BanUserForBlogCommand {
   constructor(
@@ -80,7 +79,7 @@ export class BanUserForBlogUseCases
       );
       return new Result<boolean>(ResultCode.Success, true, null);
     } catch (e) {
-      console.log(e);
+      console.log(e.message);
       console.log('catch in the BanUserForBlogCommand');
     }
   }

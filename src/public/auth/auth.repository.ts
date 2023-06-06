@@ -20,7 +20,12 @@ export class AuthRepository {
   }
 
   async findUserById(id: string) {
-    return this.dbUsersRepository.findOne({ where: { id: id } });
+    try {
+      return this.dbUsersRepository.findOne({ where: { id: id } });
+    } catch (e) {
+      console.log(e.message);
+      console.log('catch in the findUserById auth');
+    }
   }
 
   async countBannedUsersPostLikeOwner(postId: string, status: string) {

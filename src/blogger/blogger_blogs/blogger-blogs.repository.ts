@@ -63,9 +63,14 @@ export class BloggerBlogsRepository {
   }
 
   async findBlogById(id: string) {
-    return this.dbBlogsRepository.findOne({
-      where: { id: id },
-    });
+    try {
+      return this.dbBlogsRepository.findOne({
+        where: { id: id },
+      });
+    } catch (e) {
+      console.log(e.message);
+      console.log('catch in the findBlogById by blogger');
+    }
   }
 
   async createBlog(newBlog: Blogs) {
