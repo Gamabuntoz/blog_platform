@@ -13,7 +13,7 @@ import { Blogs } from '../../blogger_blogs/applications/blogger-blogs.entity';
 export class BanUserForBlog {
   @PrimaryGeneratedColumn('uuid')
   id: string;
-  @OneToOne(() => Blogs, (b) => b.id, { cascade: true })
+  @ManyToOne(() => Blogs, (b) => b.id, { cascade: true })
   @JoinColumn({ name: 'blogId' })
   blog: Blogs;
   @Column()

@@ -38,6 +38,6 @@ export class Blogs {
   blogBanDate: string | null;
   @OneToMany(() => Posts, (p) => p.blog, {})
   post: Posts[];
-  @OneToOne(() => BanUserForBlog, (bub) => bub.blog, {})
+  @OneToMany(() => BanUserForBlog, (bub) => bub.blog, {})
   banUserForBlog: BanUserForBlog[];
 }
